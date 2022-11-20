@@ -1,6 +1,6 @@
 # samples
 
-
+## Conditional Platform
 ```python
 # method returns the result of the expression after evaluation, and store the result in tree
 tree = ast.parse(source.read()) 
@@ -8,7 +8,7 @@ tree = ast.parse(source.read())
 pprint(ast.dump(tree)) 
 ```
 
-We have three cases: attribute, call e compare.
+We have three cases: attribute, call and compare.
 
 
 ### If with Attibute (verify if value exists)
@@ -113,3 +113,60 @@ orelse=[
         func=Name(id='RuntimeError', ctx=Load()), args=[Constant(value='Unknown machine!', kind=None)], keywords=[]), cause=None)])
  )
  ```
+
+## Conditional Platform with Decorator
+
+With decorator  we have three cases: FunctionDef, AsyncFunctionDef and ClassDef.
+
+Grammar 
+
+```
+FunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns, string? type_comment)
+
+AsyncFunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns,string? type_comment)
+
+ClassDef(identifier name,expr* bases,keyword* keywords,stmt* body,expr* decorator_list)
+```
+
+original code:
+
+```python
+@unittest.skipIf(sys.platform == 'macos',"Mac supports file descriptors.",)
+class ShellCommandTestCase(SimpleTestCase):
+    @unittest.skipIf(sys.platform == 'win32',"Linux is better",)
+    def test_function(self, select):
+        with captured_stdin() as stdin, captured_stdout() as stdout:
+            stdin.write(self.script_globals)
+            stdin.seek(0)
+            call_command('shell')
+        self.assertEqual(stdout.getvalue().strip(), 'True')
+
+    @unittest.skipIf(sys.platform == 'linux',"Windows select() doesn't support file descriptors.",)
+    async def test_function_async(self, select):
+        with captured_stdin() as stdin, captured_stdout() as stdout:
+            stdin.write(self.script_with_inline_function)
+        self.assertEqual(stdout.getvalue().strip(), __version__)
+```
+
+output
+
+```
+visit_ClassDef
+[Function]  ShellCommandTestCase
+value attribute:  sys
+name attribute:  platform
+comparators compare:  macos
+[reason] call args:  Mac supports file descriptors.
+visit_FunctionDef
+[Function]  test_function
+value attribute:  sys
+name attribute:  platform
+comparators compare:  win32
+[reason] call args:  Linux is better
+visit_AsyncFunctionDef
+[Function]  test_function_async
+value attribute:  sys
+name attribute:  platform
+comparators compare:  linux
+[reason] call args:  Windows select() doesn't support file descriptors.
+```
