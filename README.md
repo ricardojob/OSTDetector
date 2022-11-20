@@ -22,10 +22,9 @@ Attribute(expr value, identifier attr, expr_context ctx)
 
 original code:
 
-```
+```python
 if config.parsed_args.platform:
     return config.parsed_args.platform
-
 ```
 
 tree generated :
@@ -55,7 +54,7 @@ Call(expr func, expr* args, keyword* keywords)
 
 original code:
 
-```
+```python
 if sys_platform.startswith("linux"):
     raise RuntimeError("Unknown machine!")
 ```
@@ -87,7 +86,7 @@ Compare(expr left, cmpop* ops, expr* comparators)
 
 original code:
 
-```
+```python
 if machine == "aarch64":
     return "linux-aarch64"
 elif machine == "x86_64":
@@ -150,7 +149,7 @@ class ShellCommandTestCase(SimpleTestCase):
 
 output
 
-```
+```bash
 visit_ClassDef
 [Function]  ShellCommandTestCase
 value attribute:  sys
