@@ -57,5 +57,3 @@ count = 0
 if __name__ == '__main__':
     reader = IfReader("input/platform-if-sample.py")
     reader.fetch()
-    
-
