@@ -45,6 +45,10 @@ if __name__ == '__main__':
     with_ast(python_file)    
 
 
+
+
+
+
 # https://stackoverflow.com/questions/2572582/return-a-list-of-imported-python-modules-used-in-a-script    
 # Nome: __main__, mod: {
 #     '__name__': '__main__', 
