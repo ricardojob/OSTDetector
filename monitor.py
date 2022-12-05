@@ -3,16 +3,13 @@ import ast
 class MonitorVisitor(ast.NodeVisitor):
     def __init__(self):   
         self.chaves = dict()
-    def visit_Attribute(self, node):
-        print(f"linhas: {node.lineno}, Attribute:  {node.value.id}, Attr: {node.attr}")
-        self.generic_visit(node) 
-    
+
     def visit_Call(self, node):
         function = node.func
         if isinstance(function, ast.Attribute):
             print(f"linha: {function.lineno}, Attribute:  {function.value.id}, Attr: {function.attr}")
         if isinstance(function, ast.Name):
-            print(f'linha: {function.lineno}, Name:  {function.id}, Args: {node.args}')    
+            print(f'linha: {function.lineno}, Name:  {function.id}')    
         self.generic_visit(node) 
         
     def visit_Import(self, node):
@@ -26,6 +23,9 @@ class MonitorVisitor(ast.NodeVisitor):
             modules.add(node.module.split(".")[0])
         self.generic_visit(node) 
     
+    # def visit_Attribute(self, node):
+    #     print(f"linhas: {node.lineno}, Attribute:  {node.value.id}, Attr: {node.attr}")
+    #     self.generic_visit(node) 
     # def visit_Name(self, node):
     #     print(f'Nome: {node.id} linha: { node.lineno}')
     #     self.generic_visit(node) 
