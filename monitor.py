@@ -3,13 +3,29 @@ import ast
 class MonitorVisitor(ast.NodeVisitor):
     def __init__(self):   
         self.chaves = dict()
+        self.classe = ""
+        self.funcao = ""
+        
+    def transform(self, context, node):
+        if isinstance(node, ast.Attribute): 
+            print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value.id}, Attr: {node.attr}")
+        if isinstance(node, ast.Name):
+            print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
+        # if isinstance(parent, ast.Call):
+        #     for arg in parent.args:
+        #         self.transform("arg", arg, node)
 
+    
     def visit_Call(self, node):
         function = node.func
-        if isinstance(function, ast.Attribute):
-            print(f"linha: {function.lineno}, Attribute:  {function.value.id}, Attr: {function.attr}")
-        if isinstance(function, ast.Name):
-            print(f'linha: {function.lineno}, Name:  {function.id}')    
+        # print(f'Call  dicts: {node.__dict__}')
+        self.transform("call",function)
+        for arg in node.args:
+            self.transform("arg", arg)
+
+        for key in node.keywords: # todo: tratamento ao conditional/decorator
+            self.transform("keys", key.arg)
+
         self.generic_visit(node) 
         
     def visit_Import(self, node):
@@ -22,12 +38,26 @@ class MonitorVisitor(ast.NodeVisitor):
         if node.module is not None and node.level == 0:
             modules.add(node.module.split(".")[0])
         self.generic_visit(node) 
-    
+
+    def visit_FunctionDef(self, node):
+        self.funcao = node.name
+        ast.NodeVisitor.generic_visit(self, node)    
+                    
+    def visit_AsyncFunctionDef(self, node):
+        self.funcao = node.name
+        ast.NodeVisitor.generic_visit(self, node)    
+    def visit_Module(self, node):
+        print('load:',node.__dict__)
+        ast.NodeVisitor.generic_visit(self, node)        
+
+    def visit_ClassDef(self, node):
+        self.classe = node.name
+        ast.NodeVisitor.generic_visit(self, node)
     # def visit_Attribute(self, node):
     #     print(f"linhas: {node.lineno}, Attribute:  {node.value.id}, Attr: {node.attr}")
     #     self.generic_visit(node) 
     # def visit_Name(self, node):
-    #     print(f'Nome: {node.id} linha: { node.lineno}')
+    #     print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
     #     self.generic_visit(node) 
 
     # def visit_Module(self, node):
