@@ -80,13 +80,21 @@ class MonitorVisitor(ast.NodeVisitor):
 
 modules = set()
 if __name__ == '__main__':
-    python_file = 'input/import-sample.py'
-    with open(python_file) as file:
+    # python_file = 'input/import-sample.py'
+    # with open(python_file) as file:
+    #     monitor = MonitorVisitor()
+    #     monitor.visit(ast.parse(file.read()))
+    # print('Módulos carregados com AST: ')
+    # print(', '.join(list(modules)))
+    
+    from pathlib import Path
+    dir = '/home/ricardojob/dev/study-01-platform/input'
+    for python_file in all_files(dir):
         monitor = MonitorVisitor()
-        monitor.visit(ast.parse(file.read()))
+        monitor.visit(ast.parse(open(python_file).read()))
     print('Módulos carregados com AST: ')
     print(', '.join(list(modules)))
-    # all_files('/home/ricardojob/dev/study-01-platform/')
+       
 
 # print('default')
 # import sys
