@@ -1,5 +1,18 @@
 import ast
 
+def all_files(dir, extension='.py'):
+    """ 
+    List all files in dir
+    """
+    from pathlib import Path
+    path = Path(dir)
+    files = []
+    for file in path.rglob(pattern=f'*{extension}'):
+        files.append(file)
+    
+    # [print(f) for f in files]
+    return files
+    
 class MonitorVisitor(ast.NodeVisitor):
     def __init__(self):   
         self.chaves = dict()
@@ -7,10 +20,11 @@ class MonitorVisitor(ast.NodeVisitor):
         self.funcao = ""
         
     def transform(self, context, node):
-        if isinstance(node, ast.Attribute): 
-            print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value.id}, Attr: {node.attr}")
-        if isinstance(node, ast.Name):
-            print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
+        pass
+        # if isinstance(node, ast.Attribute): 
+        #     print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value.id}, Attr: {node.attr}")
+        # if isinstance(node, ast.Name):
+        #     print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
         # if isinstance(parent, ast.Call):
         #     for arg in parent.args:
         #         self.transform("arg", arg, node)
@@ -30,7 +44,7 @@ class MonitorVisitor(ast.NodeVisitor):
         
     def visit_Import(self, node):
         for name in node.names:
-            print(f'{name.name} -> {name.asname}')
+            # print(f'{name.name} -> {name.asname}')
             modules.add(name.name.split(".")[0])
         self.generic_visit(node)
     
@@ -46,9 +60,9 @@ class MonitorVisitor(ast.NodeVisitor):
     def visit_AsyncFunctionDef(self, node):
         self.funcao = node.name
         ast.NodeVisitor.generic_visit(self, node)    
-    def visit_Module(self, node):
-        print('load:',node.__dict__)
-        ast.NodeVisitor.generic_visit(self, node)        
+    # def visit_Module(self, node):
+    #     print('load:',node.__dict__)
+    #     ast.NodeVisitor.generic_visit(self, node)        
 
     def visit_ClassDef(self, node):
         self.classe = node.name
@@ -72,6 +86,11 @@ if __name__ == '__main__':
         monitor.visit(ast.parse(file.read()))
     print('Módulos carregados com AST: ')
     print(', '.join(list(modules)))
+    # all_files('/home/ricardojob/dev/study-01-platform/')
+
+# print('default')
+# import sys
+# print(sys.modules)
         
 # Modulo:  {'body': 
 # [<_ast.Import object at 0x7f86bd098f40>, 
