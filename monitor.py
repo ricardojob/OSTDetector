@@ -88,7 +88,7 @@ if __name__ == '__main__':
     # print(', '.join(list(modules)))
     
     from pathlib import Path
-    dir = '/home/ricardojob/dev/study-01-platform/input'
+    dir = './input'
     for python_file in all_files(dir):
         monitor = MonitorVisitor()
         monitor.visit(ast.parse(open(python_file).read()))
