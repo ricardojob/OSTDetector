@@ -18,6 +18,7 @@ class MonitorVisitor(ast.NodeVisitor):
         self.chaves = dict()
         self.classe = ""
         self.funcao = ""
+        self.modules = set()
         
     def transform(self, context, node):
         pass
@@ -45,12 +46,12 @@ class MonitorVisitor(ast.NodeVisitor):
     def visit_Import(self, node):
         for name in node.names:
             # print(f'{name.name} -> {name.asname}')
-            modules.add(name.name.split(".")[0])
+            self.modules.add(name.name.split(".")[0])
         self.generic_visit(node)
     
     def visit_ImportFrom(self, node):
         if node.module is not None and node.level == 0:
-            modules.add(node.module.split(".")[0])
+            self.modules.add(node.module.split(".")[0])
         self.generic_visit(node) 
 
     def visit_FunctionDef(self, node):
@@ -77,8 +78,9 @@ class MonitorVisitor(ast.NodeVisitor):
     # def visit_Module(self, node):
     #     print('Modulo: ',  node.__dict__)
     #     self.generic_visit(node)   
-
-modules = set()
+    def modules(self):
+        return self.modules
+# modules = set()
 if __name__ == '__main__':
     # python_file = 'input/import-sample.py'
     # with open(python_file) as file:
@@ -88,13 +90,26 @@ if __name__ == '__main__':
     # print(', '.join(list(modules)))
     
     from pathlib import Path
-    dir = './input'
+    dir = './data/django'
     for python_file in all_files(dir):
-        monitor = MonitorVisitor()
-        monitor.visit(ast.parse(open(python_file).read()))
-    print('Módulos carregados com AST: ')
-    print(', '.join(list(modules)))
-       
+        try:
+            monitor = MonitorVisitor()
+            monitor.visit(ast.parse(open(python_file).read(), mode='exec'))
+            # print('Módulos carregados com AST: ', python_file)
+            # if monitor.modules:
+            #     print(', '.join(list(monitor.modules)))
+        except SyntaxError as ex:
+            print('erro', python_file)   
+
+
+    
+#     with open(abspath, 'rb') as f:
+#       return ast.parse(f.read(), relpath)
+#     except SyntaxError as ex:
+#         LOGGER.warn('skipping %s: bad syntax: %s', _to_posix(relpath), ex)
+#   except OSError as ex:
+#     LOGGER.warn('skipping %s: %s', _to_posix(relpath), ex)
+
 
 # print('default')
 # import sys
