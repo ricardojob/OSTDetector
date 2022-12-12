@@ -9,6 +9,7 @@ class Local:
     
     def commit_head(self)-> str:
         gr = Git(self.dir_local)
+        # print(gr.path)
         return gr.get_head().hash
     
     def path(self):
@@ -20,10 +21,12 @@ class Repo:
         self.url = url
 
     def clone_at(self, dir) -> Local:
-        local = Local(dir)
+        # local = Local(dir)
+        dir_repo = dir 
         repo = Repository(self.url,  clone_repo_to=dir)
         if not os.path.exists(dir):
-            repo._clone_remote_repo(repo=self.url, tmp_folder=dir)
+            dir_repo = repo._clone_remote_repo(repo=self.url, tmp_folder=dir)
+        local = Local(dir_repo)
         return local
     
     def repo_name(self):
