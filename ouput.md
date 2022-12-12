@@ -29,3 +29,5 @@ linha: 12, Attribute:  unittest, Attr: skipIf
 Módulos carregados com AST: 
 math, sys, unittest
 ```
+
+https://github.com/django/django/blob/0036bcdcb65874f63fff8139fe86574fa155eb26/tests/admin_scripts/tests.py#L205
