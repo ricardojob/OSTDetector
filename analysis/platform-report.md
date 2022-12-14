@@ -1,6 +1,6 @@
 ### Busca no Github
 
-Quando realizamos a busca por arquivos Python no projeto [Django](https://github.com/django/django/search?q=platform), encontramos:
+Quando realizamos a busca por arquivos Python no projeto [Django](https://github.com/search?l=Python&p=3&q=platform+repo%3Adjango%2Fdjango+extension%3Apy+language%3APython+language%3APython&ref=advsearch&type=Code), encontramos:
 
 * `platform`: 30 ocorrências dessa palavra-chave.
 * `os`: 183 ocorrências dessa palavra-chave.
