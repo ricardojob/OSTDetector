@@ -7,6 +7,9 @@ Quando realizamos a busca por arquivos Python no projeto [Django](https://github
 * `sys`: 126 ocorrências dessa palavra-chave.
 * `unittest`: 226 ocorrências dessa palavra-chave.
 
+### Requisitos básicos
+
+Código sintaticamente válido (sem erros de sintaxe)
 
 ### Executando a ferramenta 
 

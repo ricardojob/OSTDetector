@@ -21,7 +21,8 @@ def dev():
     return name, commit_hash, dir
 
 def local():
-    dir = '/Users/job/Documents/dev/doutorado/study/skip-platform/data/django/django'
+    # /home/ricardojob/dev/study-01-platform
+    dir = './data/django'
     url = 'https://github.com/django/django'
     # name = 'django'
     repo = Repo('django',url)
