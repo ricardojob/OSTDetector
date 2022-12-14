@@ -50,11 +50,14 @@ if __name__ == '__main__':
     rows = []
     
     libs = set()
-    libs.add('os')
-    libs.add('platform')
-    libs.add('sys')
-    
-    csv_filename = 'input-csv/projects_filted_dev.csv'
+    # libs.add('os')
+    # libs.add('platform')
+    # libs.add('sys')
+    libs.add('unittest')
+    projects_problems = []
+    head_problems = ['project_name','files_ok', 'files_erros']
+
+    csv_filename = 'input-csv/projects_filted_local.csv'
     # csv_filename = 'input-csv/projects_filted.csv'
     has_head_readed = False
     with open(csv_filename, 'r') as file:
@@ -63,22 +66,22 @@ if __name__ == '__main__':
             if not has_head_readed: #skip head
                 has_head_readed = True
                 continue  
-            
+            count = 0
             # print(row[0])
             # project_name = row[0] 
             # project_hash = '1'
             # project_dir = '/Users/job/Documents/dev/doutorado/study/skip-platform/data/'+project_name
-            project_name, project_hash, project_dir = clone(row[0])
+            # project_name, project_hash, project_dir = clone(row[0])
+            project_name, project_hash, project_dir = local()
     
             for python_file in all_files(project_dir):
-                # if python_file.
+                if python_file.is_dir(): continue
                 row = []
                 row.append(project_name)
                 row.append(project_hash)
                 filename = str(python_file).replace(project_dir,"")
                 row.append(filename)
-                print(f'{project_name}: {filename}')
-                
+                # print(f'{project_name}: {filename}')
                 try:
                     parser = ast.parse(open(python_file).read())
                     monitor = MonitorVisitor()
@@ -101,6 +104,11 @@ if __name__ == '__main__':
                 except SyntaxError as ex:
                     # salvar os arquivos não processados
                     print('erro', python_file) 
+                    count = count + 1
                 # rows.append(row)
-    writer = WriterCSV("test_excludes")
+            projects_problems.append([project_name,  len(rows), count])
+            print(f'{project_name}: finished, files: {len(rows)}; erros: {count}')
+    writer = WriterCSV(name="test_excludes", path="analysis")
     writer.write(head=heads, rows=rows) 
+    # writer = WriterCSV(name="problems_excludes", path="analysis")
+    # writer.write(head=head_problems, rows=projects_problems) 
