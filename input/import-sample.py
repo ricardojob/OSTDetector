@@ -2,7 +2,7 @@
 import sys as sos
 from math import sin as seno
 import unittest
-from .urls import sync_waiter, test_filename
+from unittest import mock
 
 temp_plat = sos.platform
 @unittest.skipIf(condition= sos.platform == 'mac', reason='exemplos decorator list')

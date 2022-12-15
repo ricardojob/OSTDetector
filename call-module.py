@@ -42,8 +42,6 @@ class CallVisitor(ast.NodeVisitor):
             self.modules.add(module)
         self.generic_visit(node) 
 
-    def visit_Interactive(self, node: Interactive) -> Any:
-        return super().visit_Interactive(node)
     # def visit_FunctionDef(self, node):
     #     self.funcao = node.name
     #     ast.NodeVisitor.generic_visit(self, node)    
@@ -70,33 +68,76 @@ class CallVisitor(ast.NodeVisitor):
     def transform(self, context, node):
         pass
         # if isinstance(node, ast.Attribute): 
-        #     print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value}, Attr: {node.attr}")
-        #     self.transform(context, node.value)
+        #     print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value.id}, Attr: {node.attr}")
+        #     # self.transform(context, node.value)
         # if isinstance(node, ast.Name):
         #     print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
-            # if node.id and node.id in self.chamadas:
-            #     module_temp = self.chamadas[node.id]
-            #     if module_temp[0] in self.libs_os:
-            #         print(f'linha: {node.lineno}, module: {module_temp}, package {node.id}')
+        #     if node.id and node.id in self.chamadas:
+        #         module_temp = self.chamadas[node.id]
+        #         if module_temp[0] in self.libs_os:
+        #             print(f'linha: {node.lineno}, module: {module_temp}, package {node.id}')
         # if isinstance(parent, ast.Call):
         #     for arg in parent.args:
         #         self.transform("arg", arg, node)
 
     def visit_Attribute(self, node):
         # print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node.value.id}, Attr: {node.attr}")
-        # print(node.__class__)
+        # print(node.value.__class__)
         att = node.value
         if isinstance(att, ast.Name):
+            self.tratar_Name(att, node)
             # mod = self.chamadas[att.id]
-            print(f"linha: {node.lineno}, module: {att.id}, call: {node.attr}")
+            # print(f"linha: {node.lineno}, module: {mod[0]}, call: {node.attr}")
+            # if att.id and att.id in self.chamadas:
+            #     module_temp = self.chamadas[att.id]
+            #     if module_temp[0] in self.libs_os:
+            #         print(f'\tlinha: {att.lineno}, module: {module_temp}, package {att.id}')
         
         if isinstance(att, ast.Call):    
             print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att}")
 
         self.generic_visit(node)
+        
+    def tratar_Name(self, node, parent):
+        if isinstance(node, ast.Name):
+            # print(node.__dict__)
+            if node.id and node.id in self.chamadas:
+                mod = self.chamadas[node.id]
+                # print(f"linha: {node.lineno}, module: {mod[0]}, call: {parent.attr}")
+                # module_temp = self.chamadas[node.id]
+                if mod[0] in self.libs_os:
+                #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
+                    print(f"linha: {node.lineno}, module: {mod[0]}, call: {parent.attr}")
     
     def visit_Assign(self, node):
         # self.transform("assign",node.value)
+        print('---Assign---')
+
+        if isinstance(node.value, ast.Attribute):
+            package = node.value.value
+            # print(package.__dict__)
+            if isinstance(package, ast.Name):
+                # self.tratar_Name(att, node.value)
+                if package.id and package.id in self.chamadas:
+                    module_temp = self.chamadas[package.id]
+                    # mod = self.chamadas[att.id]
+                    # print(f"linha: {node.value.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
+                    if module_temp[0] in self.libs_os:
+                        print(f"key: {package.id}, li: {node.value.lineno}, linha: {package.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
+                        # print(f'\tlinha: {package.lineno}, module: {module_temp[0]}, package {package.id}')
+                        # key = node.name
+                        # if node.asname:
+                        #     key = node.asname
+                        # self.chamadas[key] = [module, package] # package_name -> [package, module]
+                        target = node.targets[0]
+                        # for a in target:
+                        #     print(a.id)
+                        # print(f"key: {target.id}, li: {target.lineno}, linha: {target.lineno}, module: {module_temp[0]}")
+                        self.chamadas[target.id] = [module_temp[0], node.value.attr] # package_name -> [package, module]
+                       
+            # if isinstance(att, ast.Call):    
+            #     print(f"linha: {node.value.lineno}, module: CALL, call: {node.value.attr}, att: {att}")
+        print('-'*30)
         self.generic_visit(node) 
         
     # def visit_Call(self, node):
