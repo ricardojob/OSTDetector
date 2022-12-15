@@ -12,27 +12,38 @@ class CallVisitor(ast.NodeVisitor):
         # self.libs_os.update(libs)
         self.chamadas = dict()
         
-    def tratar_modulos(self, node, module):
+    def tratar_modulos(self, node, module, package):
         key = node.name
         if node.asname:
             key = node.asname
-        # print(f'lib:{node.name}, as: {node.asname} -> key: {key}, module:{module}')   
-        self.chamadas[key] = [module, node.name] # package_name -> [package, module]
+        # print(f'package:{node.name}, as: {node.asname} -> key: {key}, module:{module}')   
+        # print(f'module:{module}, package: {node.name}, name: {key}')   
+        self.chamadas[key] = [module, package] # package_name -> [package, module]
+        # print(f'module:{module}, package: {package}, name: {key}')   
     def visit_Import(self, node):
+        # print(f'imprts: {node.names[0].name}')
         for name in node.names:
             # print(f'{name.name} -> {name.asname}')
-            # print(name.name)
-            self.tratar_modulos(name, name.name.split(".")[0])
+            # self.tratar_modulos(name, name.name.split(".")[0])
+            module = name.name.split(".")[0]
+            # key = module
+            # if name.asname:
+            #     key = name.asname
+            # self.chamadas[key] = [module, None] # package_name -> [package, module]
+            # print(f'module:{module}, package: {None}, name: {key}')    
+            self.tratar_modulos(name, module, None)
             self.modules.add(name.name.split(".")[0])
         self.generic_visit(node)
     
     def visit_ImportFrom(self, node):
         if node.module is not None and node.level == 0:
-            # print(node.module)
-            [self.tratar_modulos(nam, node.module.split(".")[0]) for nam in node.names ]    
-            self.modules.add(node.module.split(".")[0])
+            module = node.module.split(".")[0]
+            [self.tratar_modulos(nam, module, nam.name) for nam in node.names ]    
+            self.modules.add(module)
         self.generic_visit(node) 
 
+    def visit_Interactive(self, node: Interactive) -> Any:
+        return super().visit_Interactive(node)
     # def visit_FunctionDef(self, node):
     #     self.funcao = node.name
     #     ast.NodeVisitor.generic_visit(self, node)    
@@ -51,18 +62,18 @@ class CallVisitor(ast.NodeVisitor):
         # print(f'linha: { node.lineno}, visit_Name: {node.id}')
         if node.id and node.id in self.chamadas:
             module_temp = self.chamadas[node.id]
-            if module_temp[0] in self.libs_os:
-                print(f'linha: {node.lineno}, module: {module_temp}, package {node.id}')
+            # if module_temp[0] in self.libs_os:
+            #     print(f'linha: {node.lineno}, package {node.id}, module: {module_temp}')
                 # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
         self.generic_visit(node) 
     
     def transform(self, context, node):
-        # pass
-        if isinstance(node, ast.Attribute): 
-            print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value}, Attr: {node.attr}")
-            self.transform("atributo", node.value)
-        if isinstance(node, ast.Name):
-            print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
+        pass
+        # if isinstance(node, ast.Attribute): 
+        #     print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value}, Attr: {node.attr}")
+        #     self.transform(context, node.value)
+        # if isinstance(node, ast.Name):
+        #     print(f'classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Name:  {node.id}')  
             # if node.id and node.id in self.chamadas:
             #     module_temp = self.chamadas[node.id]
             #     if module_temp[0] in self.libs_os:
@@ -71,20 +82,32 @@ class CallVisitor(ast.NodeVisitor):
         #     for arg in parent.args:
         #         self.transform("arg", arg, node)
 
-    # def visit_ (self, node):
+    def visit_Attribute(self, node):
+        # print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node.value.id}, Attr: {node.attr}")
+        # print(node.__class__)
+        att = node.value
+        if isinstance(att, ast.Name):
+            # mod = self.chamadas[att.id]
+            print(f"linha: {node.lineno}, module: {att.id}, call: {node.attr}")
+        
+        if isinstance(att, ast.Call):    
+            print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att}")
+
+        self.generic_visit(node)
+    
     def visit_Assign(self, node):
-        self.transform("assign",node.value)
+        # self.transform("assign",node.value)
         self.generic_visit(node) 
         
-    def visit_Call(self, node):
-        function = node.func
-        # print(f'Call  dicts: {node.__dict__}')
-        self.transform("call",function)
-        for arg in node.args:
-            self.transform("arg", arg)
-        for key in node.keywords: # todo: tratamento ao conditional/decorator
-            self.transform("keys", key.arg)
-        self.generic_visit(node) 
+    # def visit_Call(self, node):
+    #     function = node.func
+    #     # print(f'Call  dicts: {node.__dict__}')
+    #     self.transform("call",function)
+    #     for arg in node.args:
+    #         self.transform("arg", arg)
+    #     for key in node.keywords: # todo: tratamento ao conditional/decorator
+    #         self.transform("keys", key.arg)
+    #     self.generic_visit(node) 
         
     def modules(self):
         return self.modules
@@ -94,7 +117,11 @@ class CallVisitor(ast.NodeVisitor):
         for k in self.chamadas: 
             print(f'{k} -> {self.chamadas[k]}')
         print('-'*30)
-        
+    def print_modules(self):
+        print('='*30)
+        print(', '.join(list(self.modules)))  # -> 'file_modules'    
+        print('='*30)
+
     count = 0
     
     # Attribute(expr value, identifier attr, expr_context ctx)
@@ -138,8 +165,8 @@ class CallVisitor(ast.NodeVisitor):
 
 if __name__ == '__main__':
     # python_file = "data/django/django/tests/asgi/tests.py"
-    python_file = "input/sys-sample.py"
-    # python_file = "input/import-sample.py"
+    # python_file = "input/sys-sample.py"
+    python_file = "input/import-sample.py"
     libs = set()
     libs.add('os')
     libs.add('platform')
@@ -153,7 +180,8 @@ if __name__ == '__main__':
         if not monitor.modules: # continue
             print('no modules')
         else:
-            print(', '.join(list(monitor.modules)))  # -> 'file_modules'
+            # print(', '.join(list(monitor.modules)))  # -> 'file_modules'
+            # monitor.print_modules()
             if libs.intersection(monitor.modules): # verify file with modules -> 'file_modules_excludes'
                 print(f'has modules: {len(monitor.modules)}') # -> 'file_modules_excludes'
             else:
