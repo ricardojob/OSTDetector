@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 
+from monitor import all_files
+
 
 class CallVisitor(ast.NodeVisitor):
     def __init__(self, libs):   
@@ -94,8 +96,9 @@ class CallVisitor(ast.NodeVisitor):
             #         print(f'\tlinha: {att.lineno}, module: {module_temp}, package {att.id}')
         
         if isinstance(att, ast.Call):    
-            print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att}")
-
+            # print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att}")
+            pass
+        
         self.generic_visit(node)
         
     def tratar_Name(self, node, parent):
@@ -107,14 +110,15 @@ class CallVisitor(ast.NodeVisitor):
                 # module_temp = self.chamadas[node.id]
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
-                    print(f"linha: {node.lineno}, module: {mod[0]}, call: {parent.attr}")
+                    if parent.attr in self.libs_os[mod[0]]:
+                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name")
     
     def visit_Assign(self, node):
         # self.transform("assign",node.value)
-        print('---Assign---')
-
-        if isinstance(node.value, ast.Attribute):
-            package = node.value.value
+        # print('-------------Assign')
+        parent = node.value
+        if isinstance(parent, ast.Attribute):
+            package = parent.value
             # print(package.__dict__)
             if isinstance(package, ast.Name):
                 # self.tratar_Name(att, node.value)
@@ -123,21 +127,33 @@ class CallVisitor(ast.NodeVisitor):
                     # mod = self.chamadas[att.id]
                     # print(f"linha: {node.value.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
                     if module_temp[0] in self.libs_os:
-                        print(f"key: {package.id}, li: {node.value.lineno}, linha: {package.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
-                        # print(f'\tlinha: {package.lineno}, module: {module_temp[0]}, package {package.id}')
-                        # key = node.name
-                        # if node.asname:
-                        #     key = node.asname
-                        # self.chamadas[key] = [module, package] # package_name -> [package, module]
-                        target = node.targets[0]
-                        # for a in target:
-                        #     print(a.id)
-                        # print(f"key: {target.id}, li: {target.lineno}, linha: {target.lineno}, module: {module_temp[0]}")
-                        self.chamadas[target.id] = [module_temp[0], node.value.attr] # package_name -> [package, module]
-                       
+                        targets = node.targets[0]
+                        def tratar_pacotes(target):
+                            if parent.attr in self.libs_os[module_temp[0]]:
+                                self.chamadas[target.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
+                                print(f"  linha: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- Assign")
+                        # print(target.__class__)
+                        if isinstance(targets, ast.Attribute):
+                            # print(self.libs_os[module_temp[0]])
+                            if targets.value:
+                                tratar_pacotes(targets.value)
+                                # print(target.value.__class__, ' -> ',dict(target.value.__dict__))
+                                # if parent.attr in self.libs_os[module_temp[0]]:
+                                #     self.chamadas[target.value.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
+                                #     print(f"  linhas: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- assign")
+                        if isinstance(targets, ast.Name):
+                            # print(self.libs_os[module_temp[0]])
+                            if targets:
+                                tratar_pacotes(targets)
+                                # print(target.value.__class__, ' -> ',dict(target.value.__dict__))
+                                # if module_temp[0] in self.libs_os:
+                                # if parent.attr in self.libs_os[module_temp[0]]:
+                                #     self.chamadas[target.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
+                                #     print(f"  linhas: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- assign")
+                        # print(f"key: {package.id}, li: {node.value.lineno}, linha: {package.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
             # if isinstance(att, ast.Call):    
             #     print(f"linha: {node.value.lineno}, module: CALL, call: {node.value.attr}, att: {att}")
-        print('-'*30)
+        # print('-'*30)
         self.generic_visit(node) 
         
     # def visit_Call(self, node):
@@ -163,76 +179,95 @@ class CallVisitor(ast.NodeVisitor):
         print(', '.join(list(self.modules)))  # -> 'file_modules'    
         print('='*30)
 
-    count = 0
+    # count = 0
     
-    # Attribute(expr value, identifier attr, expr_context ctx)
-    def parse_attr(self, attribute):
-        if isinstance(attribute.value, ast.Name):
-            print('value attribute: ', attribute.value.id)
-        if isinstance(attribute.value, ast.Attribute):
-            self.parse_attr(attribute.value)
-        print('name attribute: ', attribute.attr)
+    # # Attribute(expr value, identifier attr, expr_context ctx)
+    # def parse_attr(self, attribute):
+    #     if isinstance(attribute.value, ast.Name):
+    #         print('value attribute: ', attribute.value.id)
+    #     if isinstance(attribute.value, ast.Attribute):
+    #         self.parse_attr(attribute.value)
+    #     print('name attribute: ', attribute.attr)
 
-    # Compare(expr left, cmpop* ops, expr* comparators)
-    def parse_compare(self, compare):
-        if isinstance(compare.left, ast.Name):
-            print('left compare: ', compare.left.id)
-        for comparator in compare.comparators:    
-            if isinstance(comparator, ast.Constant):
-                print('comparators compare: ', comparator.value)            
+    # # Compare(expr left, cmpop* ops, expr* comparators)
+    # def parse_compare(self, compare):
+    #     if isinstance(compare.left, ast.Name):
+    #         print('left compare: ', compare.left.id)
+    #     for comparator in compare.comparators:    
+    #         if isinstance(comparator, ast.Constant):
+    #             print('comparators compare: ', comparator.value)            
     
-    # Call(expr func, expr* args, keyword* keywords)
-    def parse_call(self, call):
-        # print('call func: ', call.func)
-        if isinstance(call.func, ast.Name):
-            print('call func id: ', call.func.id)
-        if isinstance(call.func, ast.Attribute):
-            self.parse_attr(call.func)
-        for arg in call.args:    
-            if isinstance(arg, ast.Constant):
-                print('call args: ', arg.value)
+    # # Call(expr func, expr* args, keyword* keywords)
+    # def parse_call(self, call):
+    #     # print('call func: ', call.func)
+    #     if isinstance(call.func, ast.Name):
+    #         print('call func id: ', call.func.id)
+    #     if isinstance(call.func, ast.Attribute):
+    #         self.parse_attr(call.func)
+    #     for arg in call.args:    
+    #         if isinstance(arg, ast.Constant):
+    #             print('call args: ', arg.value)
 
-    def visit_If(self, node):
-        self.count+=1
-        self.transform("if",node.test)
-        if isinstance(node.test, ast.Attribute):
-            self.parse_attr(node.test)
-        if isinstance(node.test, ast.Compare):
-            self.parse_compare(node.test)
-        if isinstance(node.test, ast.Call):
-            self.parse_call(node.test)
-        ast.NodeVisitor.generic_visit(self, node)  
+    # def visit_If(self, node):
+    #     self.count+=1
+    #     self.transform("if",node.test)
+    #     if isinstance(node.test, ast.Attribute):
+    #         self.parse_attr(node.test)
+    #     if isinstance(node.test, ast.Compare):
+    #         self.parse_compare(node.test)
+    #     if isinstance(node.test, ast.Call):
+    #         self.parse_call(node.test)
+    #     ast.NodeVisitor.generic_visit(self, node)  
 # modules = set()
 
 if __name__ == '__main__':
     # python_file = "data/django/django/tests/asgi/tests.py"
+    # python_file = "data/django/django/tests/migrations/test_writer.py"
+    # python_file = "data/django/django/tests/shell/tests.py"
+    # python_file = "data/django/django/tests/admin_filters/tests.py"
+    # python_file = "data/django/django/tests/template_tests/test_loaders.py"
     # python_file = "input/sys-sample.py"
-    python_file = "input/import-sample.py"
-    libs = set()
-    libs.add('os')
-    libs.add('platform')
-    libs.add('sys')
+    # python_file = "input/import-sample.py"
+    # python_file = "data/django/django/tests/mail/tests.py"
+    
+    # libs = set()
+    # libs.add('os')
+    # libs.add('platform')
+    # libs.add('sys')
+    libs_os =  dict()
+    libs_os['os'] = ['path', 'listdir']
+    libs_os['platform'] = ['machine', 'system']
+    libs_os['sys'] = ['path', 'platform']
         # libs.add('unittest')
-
-    try:
-        parser = ast.parse(open(python_file).read())
-        monitor = CallVisitor(libs)
-        monitor.visit(parser)
-        if not monitor.modules: # continue
-            print('no modules')
-        else:
-            # print(', '.join(list(monitor.modules)))  # -> 'file_modules'
-            # monitor.print_modules()
-            if libs.intersection(monitor.modules): # verify file with modules -> 'file_modules_excludes'
-                print(f'has modules: {len(monitor.modules)}') # -> 'file_modules_excludes'
+    
+    project_dir = "data/django/django/tests/mail"
+    for python_file in all_files(project_dir):
+        if python_file.is_dir(): continue
+        try:
+            if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
+                print(f'has test: {python_file}')
+                pass
             else:
-                print('no modules') # -> 'file_modules_excludes'
-        if 'test' in python_file: # verify file with test -> 'file_with_tests'
-            print(f'has test: {python_file}')
-        else:
-            print('no test')
-        
-        monitor.print_chamadas()
-    except SyntaxError as ex:
-        print('erro', python_file) 
+                # print('no test')
+                pass
+            
+            parser = ast.parse(open(python_file).read())
+            monitor = CallVisitor(libs_os)
+            monitor.visit(parser)
+            if not monitor.modules: # continue
+                # print('no modules')
+                pass
+            else:
+                # print(', '.join(list(monitor.modules)))  # -> 'file_modules'
+                # monitor.print_modules()
+                if set(libs_os.keys()).intersection(monitor.modules): # verify file with modules -> 'file_modules_excludes'
+                    # print(f'has modules: {len(monitor.modules)}') # -> 'file_modules_excludes'
+                    pass
+                else:
+                    # print('no modules') # -> 'file_modules_excludes'
+                    pass
+            # file_list.append(str(filename))
+            # monitor.print_chamadas()
+        except SyntaxError as ex:
+            print('erro', python_file) 
     
