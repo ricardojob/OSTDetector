@@ -240,7 +240,7 @@ if __name__ == '__main__':
     libs_os['sys'] = ['path', 'platform']
         # libs.add('unittest')
     
-    project_dir = "data/django/django/tests/mail"
+    project_dir = "data/django/django/tests/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         try:
