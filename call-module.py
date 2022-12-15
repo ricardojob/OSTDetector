@@ -2,17 +2,19 @@ import ast
 from pathlib import Path
 
 from monitor import all_files
+from writercsv import WriterCSV
 
 
 class CallVisitor(ast.NodeVisitor):
-    def __init__(self, libs):   
+    def __init__(self, libs, file):   
         self.chaves = dict()
-        self.classe = ""
+        self.classe = file
         self.funcao = ""
         self.modules = set()
         self.libs_os = libs
         # self.libs_os.update(libs)
         self.chamadas = dict()
+        self.package_os = []
         
     def tratar_modulos(self, node, module, package):
         key = node.name
@@ -44,28 +46,27 @@ class CallVisitor(ast.NodeVisitor):
             self.modules.add(module)
         self.generic_visit(node) 
 
-    # def visit_FunctionDef(self, node):
-    #     self.funcao = node.name
-    #     ast.NodeVisitor.generic_visit(self, node)    
+    def visit_FunctionDef(self, node):
+        self.funcao = node.name
+        self.generic_visit(node)
                     
-    # def visit_AsyncFunctionDef(self, node):
-    #     self.funcao = node.name
-    #     ast.NodeVisitor.generic_visit(self, node)           
+    def visit_AsyncFunctionDef(self, node):
+        self.funcao = node.name
+        self.generic_visit(node)
 
     # def visit_ClassDef(self, node):
     #     self.classe = node.name
     #     ast.NodeVisitor.generic_visit(self, node)
-        
     
-    def visit_Name(self, node):
-        # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
-        # print(f'linha: { node.lineno}, visit_Name: {node.id}')
-        if node.id and node.id in self.chamadas:
-            module_temp = self.chamadas[node.id]
-            # if module_temp[0] in self.libs_os:
-            #     print(f'linha: {node.lineno}, package {node.id}, module: {module_temp}')
-                # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
-        self.generic_visit(node) 
+    # def visit_Name(self, node):
+    #     # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
+    #     # print(f'linha: { node.lineno}, visit_Name: {node.id}')
+    #     if node.id and node.id in self.chamadas:
+    #         module_temp = self.chamadas[node.id]
+    #         # if module_temp[0] in self.libs_os:
+    #         #     print(f'linha: {node.lineno}, package {node.id}, module: {module_temp}')
+    #             # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
+    #     self.generic_visit(node) 
     
     def transform(self, context, node):
         pass
@@ -111,7 +112,8 @@ class CallVisitor(ast.NodeVisitor):
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
                     if parent.attr in self.libs_os[mod[0]]:
-                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name")
+                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.classe}, func:{self.funcao}")
+                        self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     
     def visit_Assign(self, node):
         # self.transform("assign",node.value)
@@ -131,7 +133,8 @@ class CallVisitor(ast.NodeVisitor):
                         def tratar_pacotes(target):
                             if parent.attr in self.libs_os[module_temp[0]]:
                                 self.chamadas[target.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
-                                print(f"  linha: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- Assign")
+                                print(f"  linha: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- Assign, classe:{self.classe}, func:{self.funcao}")
+                                self.package_os.append([package.lineno, module_temp[0], parent.attr,self.classe,self.funcao])
                         # print(target.__class__)
                         if isinstance(targets, ast.Attribute):
                             # print(self.libs_os[module_temp[0]])
@@ -235,24 +238,29 @@ if __name__ == '__main__':
     # libs.add('platform')
     # libs.add('sys')
     libs_os =  dict()
-    libs_os['os'] = ['path', 'listdir']
-    libs_os['platform'] = ['machine', 'system']
-    libs_os['sys'] = ['path', 'platform']
-        # libs.add('unittest')
+    # libs_os['os'] = ['path', 'listdir']
+    # libs_os['platform'] = ['machine', 'system']
+    # libs_os['sys'] = ['path', 'platform']
     
+    libs_os =  dict()
+    # libs_os['os'] = ['path', 'listdir']
+    # libs_os['platform'] = ['machine', 'system']
+    libs_os['sys'] = [ 'platform']
+        # libs.add('unittest')
+    pacotes = []
     project_dir = "data/django/django/tests/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         try:
             if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
-                print(f'has test: {python_file}')
+                # print(f'has test: {python_file}')
                 pass
             else:
                 # print('no test')
                 pass
-            
+            filename = str(python_file).replace(project_dir,"")
             parser = ast.parse(open(python_file).read())
-            monitor = CallVisitor(libs_os)
+            monitor = CallVisitor(libs_os, filename)
             monitor.visit(parser)
             if not monitor.modules: # continue
                 # print('no modules')
@@ -268,6 +276,11 @@ if __name__ == '__main__':
                     pass
             # file_list.append(str(filename))
             # monitor.print_chamadas()
+            if len(monitor.package_os) > 0:
+                pacotes.extend(monitor.package_os)
         except SyntaxError as ex:
             print('erro', python_file) 
-    
+                    # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
+    heads = ['linhas', 'module', 'package', 'file', 'function']
+    writer = WriterCSV(name="packages_os", path="analysis")
+    writer.write(head=heads, rows=pacotes) 
