@@ -82,12 +82,16 @@ class CallVisitor(ast.NodeVisitor):
         # if isinstance(parent, ast.Call):
         #     for arg in parent.args:
         #         self.transform("arg", arg, node)
+    def visit_Load(self, node):
+        # print(node, ' ', node)
+        self.generic_visit(node)
 
     def visit_Attribute(self, node):
         # print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node.value.id}, Attr: {node.attr}")
-        # print(node.value.__class__)
+        # print(node.lineno, ' ', node.value.__class__)
         att = node.value
         if isinstance(att, ast.Name):
+            # print(node.lineno, ' ', att.id)
             self.tratar_Name(att, node)
             # mod = self.chamadas[att.id]
             # print(f"linha: {node.lineno}, module: {mod[0]}, call: {node.attr}")
@@ -97,7 +101,7 @@ class CallVisitor(ast.NodeVisitor):
             #         print(f'\tlinha: {att.lineno}, module: {module_temp}, package {att.id}')
         
         if isinstance(att, ast.Call):    
-            # print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att}")
+            # print(f"linha: {node.lineno}, module: CALL, call: {node.attr}, att: {att.func}")
             pass
         
         self.generic_visit(node)
@@ -116,15 +120,12 @@ class CallVisitor(ast.NodeVisitor):
                         self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     
     def visit_Assign(self, node):
-        # self.transform("assign",node.value)
-        # print('-------------Assign')
         parent = node.value
         if isinstance(parent, ast.Attribute):
             package = parent.value
-            # print(package.__dict__)
             if isinstance(package, ast.Name):
-                # self.tratar_Name(att, node.value)
-                if package.id and package.id in self.chamadas:
+                if package.id and package.id in self.chamadas: 
+                    # print(package.id, '->', package.lineno)
                     module_temp = self.chamadas[package.id]
                     # mod = self.chamadas[att.id]
                     # print(f"linha: {node.value.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
@@ -137,23 +138,11 @@ class CallVisitor(ast.NodeVisitor):
                                 self.package_os.append([package.lineno, module_temp[0], parent.attr,self.classe,self.funcao])
                         # print(target.__class__)
                         if isinstance(targets, ast.Attribute):
-                            # print(self.libs_os[module_temp[0]])
                             if targets.value:
                                 tratar_pacotes(targets.value)
-                                # print(target.value.__class__, ' -> ',dict(target.value.__dict__))
-                                # if parent.attr in self.libs_os[module_temp[0]]:
-                                #     self.chamadas[target.value.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
-                                #     print(f"  linhas: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- assign")
                         if isinstance(targets, ast.Name):
-                            # print(self.libs_os[module_temp[0]])
                             if targets:
                                 tratar_pacotes(targets)
-                                # print(target.value.__class__, ' -> ',dict(target.value.__dict__))
-                                # if module_temp[0] in self.libs_os:
-                                # if parent.attr in self.libs_os[module_temp[0]]:
-                                #     self.chamadas[target.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
-                                #     print(f"  linhas: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- assign")
-                        # print(f"key: {package.id}, li: {node.value.lineno}, linha: {package.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
             # if isinstance(att, ast.Call):    
             #     print(f"linha: {node.value.lineno}, module: CALL, call: {node.value.attr}, att: {att}")
         # print('-'*30)
@@ -248,7 +237,8 @@ if __name__ == '__main__':
     libs_os['sys'] = [ 'platform']
         # libs.add('unittest')
     pacotes = []
-    project_dir = "data/django/django/tests/"
+    project_dir = "input"
+    # project_dir = "data/django/django/tests/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         try:
