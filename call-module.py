@@ -54,9 +54,11 @@ class CallVisitor(ast.NodeVisitor):
         self.funcao = node.name
         self.generic_visit(node)
 
-    # def visit_ClassDef(self, node):
-    #     self.classe = node.name
-    #     ast.NodeVisitor.generic_visit(self, node)
+    def visit_ClassDef(self, node):
+        # self.classe = node.name
+        # ast.NodeVisitor.generic_visit(self, node)
+        self.funcao = ''
+        self.generic_visit(node)
     
     # def visit_Name(self, node):
     #     # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
@@ -115,7 +117,7 @@ class CallVisitor(ast.NodeVisitor):
                 # module_temp = self.chamadas[node.id]
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
-                    if parent.attr in self.libs_os[mod[0]]:
+                    if parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0:
                         print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.classe}, func:{self.funcao}")
                         self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     
@@ -226,19 +228,22 @@ if __name__ == '__main__':
     # libs.add('os')
     # libs.add('platform')
     # libs.add('sys')
-    libs_os =  dict()
+    # libs_os =  dict()
     # libs_os['os'] = ['path', 'listdir']
     # libs_os['platform'] = ['machine', 'system']
     # libs_os['sys'] = ['path', 'platform']
     
     libs_os =  dict()
-    # libs_os['os'] = ['path', 'listdir']
     # libs_os['platform'] = ['machine', 'system']
-    libs_os['sys'] = [ 'platform']
+    # libs_os['os'] = ['path', 'listdir']
+    libs_os['os'] = []
+    # libs_os['platform'] = []
+    # libs_os['sys'] = [ 'platform']
+    # libs_os['sys'] = []
         # libs.add('unittest')
     pacotes = []
-    project_dir = "input"
-    # project_dir = "data/django/django/tests/"
+    # project_dir = "input"
+    project_dir = "data/django/django/tests/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         try:
