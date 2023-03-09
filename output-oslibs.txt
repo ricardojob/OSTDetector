@@ -1,0 +1,14 @@
+sys.platform: linux
+platform.platform(): Linux-5.15.0-60-generic-x86_64-with-glibc2.35
+platform.system(): Linux
+platform.version(): #66-Ubuntu SMP Fri Jan 20 14:29:49 UTC 2023
+platform.uname(): uname_result(system='Linux', node='aserg-Vostro-260s', release='5.15.0-60-generic', version='#66-Ubuntu SMP Fri Jan 20 14:29:49 UTC 2023', machine='x86_64')
+platform.win32_edition(): None
+platform.win32_ver(): ('', '', '', '')
+platform.win32_is_iot(): False
+platform.mac_ver(): ('', ('', '', ''), '')
+platform.libc_ver(): ('glibc', '2.35')
+platform.freedesktop_os_release(): {'NAME': 'Ubuntu', 'ID': 'ubuntu', 'PRETTY_NAME': 'Ubuntu 22.04.1 LTS', 'VERSION_ID': '22.04', 'VERSION': '22.04.1 LTS (Jammy Jellyfish)', 'VERSION_CODENAME': 'jammy', 'ID_LIKE': 'debian', 'HOME_URL': 'https://www.ubuntu.com/', 'SUPPORT_URL': 'https://help.ubuntu.com/', 'BUG_REPORT_URL': 'https://bugs.launchpad.net/ubuntu/', 'PRIVACY_POLICY_URL': 'https://www.ubuntu.com/legal/terms-and-policies/privacy-policy', 'UBUNTU_CODENAME': 'jammy'}
+os.name: posix
+os.supports_bytes_environ: True
+os.uname(): posix.uname_result(sysname='Linux', nodename='aserg-Vostro-260s', release='5.15.0-60-generic', version='#66-Ubuntu SMP Fri Jan 20 14:29:49 UTC 2023', machine='x86_64')

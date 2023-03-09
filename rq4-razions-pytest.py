@@ -222,8 +222,8 @@ if __name__ == '__main__':
     project_name = 'django'
     project_hash = '19867c612c898d3075a922e74db8e105adae89c6'
     files = 0 # temp, only conference
-    # project_dir = "data/django/django/tests/"
-    project_dir = "data/cdp-backend"
+    project_dir = "data/django/django/tests/"
+    # project_dir = "data/cdp-backend"
     # project_dir = "data/flask/tests"
     # python_file = "data/cdp-backend/cdp_backend/tests/pipeline/test_event_gather_pipeline.py"
     # project_dir = "input/"

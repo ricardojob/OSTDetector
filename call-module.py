@@ -236,9 +236,9 @@ if __name__ == '__main__':
     libs_os =  dict()
     # libs_os['platform'] = ['machine', 'system']
     # libs_os['os'] = ['path', 'listdir']
-    libs_os['os'] = []
+    # libs_os['os'] = []
     # libs_os['platform'] = []
-    # libs_os['sys'] = [ 'platform']
+    libs_os['sys'] = [ 'platform']
     # libs_os['sys'] = []
         # libs.add('unittest')
     pacotes = []
