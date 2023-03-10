@@ -238,14 +238,19 @@ if __name__ == '__main__':
     # libs_os['os'] = ['path', 'listdir']
     # libs_os['os'] = []
     # libs_os['platform'] = []
-    libs_os['sys'] = [ 'platform']
+    libs_os['sys'] = [ 'platform', 'getwindowsversion']
+    libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
+    libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     # libs_os['sys'] = []
         # libs.add('unittest')
     pacotes = []
     # project_dir = "input"
-    project_dir = "data/django/django/tests/"
+    # project_dir = "data/django/django/tests/"
+    project_dir = "data/flask/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
+        # print(python_file)
+        # """
         try:
             if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
                 # print(f'has test: {python_file}')
@@ -273,9 +278,11 @@ if __name__ == '__main__':
             # monitor.print_chamadas()
             if len(monitor.package_os) > 0:
                 pacotes.extend(monitor.package_os)
+        
         except SyntaxError as ex:
             print('erro', python_file) 
                     # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     heads = ['linhas', 'module', 'package', 'file', 'function']
     writer = WriterCSV(name="packages_os", path="analysis")
     writer.write(head=heads, rows=pacotes) 
+    # """
