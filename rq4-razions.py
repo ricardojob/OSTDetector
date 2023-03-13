@@ -49,6 +49,7 @@ class DecoratorVisitor(ast.NodeVisitor):
             decoratorAtt = self.flatten_attr(d.func)
             if not decoratorAtt in self.decorator:
                 continue
+            # print('Decorator: ', decoratorAtt)
             # @unittest.skipIf(condition, reason) Skip the decorated test if condition is true.   
             # @unittest.skipIf(sys.platform == 'win32', "Windows select() doesn't support file descriptors.")
             # print('[Function] ', node.name)
@@ -99,8 +100,9 @@ if __name__ == '__main__':
     # libs_os['unittest'] = ['skipIf']
     # pacotes = []
     razions = []
-    # files = 0 # temp, only conference
-    project_dir = "data/django/django/tests/"
+    files = 0 # temp, only conference
+    # project_dir = "data/django/django/tests/"
+    project_dir = "data/cdp-backend"
     # project_dir = "input/"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
@@ -116,13 +118,15 @@ if __name__ == '__main__':
             # parser = ast.parse(open(python_file).read())
             # monitor = CallVisitor(libs_os, filename)
             # monitor.visit(parser)
-            # print(python_file)
+            
             # reader = DecoratorReader(python_file, ['unittest.skipIf', 'skipIf'])
-            # reader = DecoratorReader(python_file, ['unittest.skipIf']) #18 ok
-            # reader = DecoratorReader(python_file, 'skipIf') #23 ok
+            # reader = DecoratorReader(python_file, ['unittest.skipIf']) #18 ok, 13 files
+            # reader = DecoratorReader(python_file, 'skipIf') #23 ok, 12 files
             # reader = DecoratorReader(python_file, ['unittest.skipUnless']) #116 ok, 54 files
             # reader = DecoratorReader(python_file, ['skipUnless']) # #49 ok, 25 files
-            reader = DecoratorReader(python_file, ['unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']) # #49 ok, 25 files
+            # reader = DecoratorReader(python_file, ['unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']) # #49 ok, 25 files
+            print(python_file)
+            reader = DecoratorReader(python_file, ['pytest.mark.skipif'])
             all = reader.fetch()
             for row in all:
                 if 'module' in row: #module (sys, os, platform) sem o module não importa
@@ -134,18 +138,18 @@ if __name__ == '__main__':
                     row_temp = []    
                     [row_temp.extend([v]) for v in row.values()]
                     razions.append(row_temp)
-            # if all: 
-            #     files = files + 1
+            if all: 
+                files = files + 1
         except SyntaxError as ex:
             print('erro', python_file) 
                     # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     # print(len(razions))
-    # print(len(razions), ' - ', files)
+    print(len(razions), ' - ', files)
     # for row in razions:
     #     # if 'module' in row:
-    #     print(row)
-    heads = ['module','package', 'platform', 'razion', 'decorator', 'filename']
-    writer = WriterCSV(name="razions", path="analysis")
-    writer.write(head=heads, rows=razions) 
+        # print(row)
+    # heads = ['module','package', 'platform', 'razion', 'decorator', 'filename']
+    # writer = WriterCSV(name="razions", path="analysis")
+    # writer.write(head=heads, rows=razions) 
 
     

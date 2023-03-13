@@ -246,7 +246,9 @@ if __name__ == '__main__':
     pacotes = []
     # project_dir = "input"
     # project_dir = "data/django/django/tests/"
-    project_dir = "data/flask/"
+    # project_dir = "data/flask/"
+    # project_dir = "data/requests/tests"
+    project_dir = "data/ansible/test"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         # print(python_file)
