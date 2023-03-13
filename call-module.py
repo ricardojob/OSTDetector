@@ -120,7 +120,7 @@ class CallVisitor(ast.NodeVisitor):
                     if parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0:
                         print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.classe}, func:{self.funcao}")
                         self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
-    
+    """
     def visit_Assign(self, node):
         parent = node.value
         if isinstance(parent, ast.Attribute):
@@ -149,7 +149,7 @@ class CallVisitor(ast.NodeVisitor):
             #     print(f"linha: {node.value.lineno}, module: CALL, call: {node.value.attr}, att: {att}")
         # print('-'*30)
         self.generic_visit(node) 
-        
+    """    
     # def visit_Call(self, node):
     #     function = node.func
     #     # print(f'Call  dicts: {node.__dict__}')
