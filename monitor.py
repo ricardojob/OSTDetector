@@ -12,7 +12,10 @@ def all_files(dir, extension='.py'):
     
     # [print(f) for f in files]
     return files
-    
+
+"""
+This class monitors the modules used in a file
+"""    
 class MonitorVisitor(ast.NodeVisitor):
     def __init__(self):   
         self.chaves = dict()

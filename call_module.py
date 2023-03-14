@@ -6,15 +6,18 @@ from writercsv import WriterCSV
 
 
 class CallVisitor(ast.NodeVisitor):
-    def __init__(self, libs, file):   
+    def __init__(self, libs, project_name, project_hash, file):   
+        self.project_name = project_name
+        self.project_hash = project_hash
+        self.filename = file
+        self.libs_os = libs
         self.chaves = dict()
-        self.classe = file
         self.funcao = ""
         self.modules = set()
-        self.libs_os = libs
         # self.libs_os.update(libs)
         self.chamadas = dict()
         self.package_os = []
+        # self.p=None
         
     def tratar_modulos(self, node, module, package):
         key = node.name
@@ -59,7 +62,19 @@ class CallVisitor(ast.NodeVisitor):
         # ast.NodeVisitor.generic_visit(self, node)
         self.funcao = ''
         self.generic_visit(node)
+    # def visit_Compare(self, node):
+    #     self.p = node
+    #     self.generic_visit(node)
     
+    # def visit_If(self, node):
+    #     self.p = node
+    #     self.generic_visit(node)
+    # def visit_Call(self, node):
+    #     self.p = node
+    #     self.generic_visit(node)
+    # def visit_Assign(self, node):
+    #     self.p = None
+    #     self.generic_visit(node)
     # def visit_Name(self, node):
     #     # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
     #     # print(f'linha: { node.lineno}, visit_Name: {node.id}')
@@ -70,8 +85,8 @@ class CallVisitor(ast.NodeVisitor):
     #             # print(f'linha: { node.lineno}, visit_Name: {node.id} {node.__dict__}')
     #     self.generic_visit(node) 
     
-    def transform(self, context, node):
-        pass
+    # def transform(self, context, node):
+    #     pass
         # if isinstance(node, ast.Attribute): 
         #     print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: {context}, Attribute:  {node.value.id}, Attr: {node.attr}")
         #     # self.transform(context, node.value)
@@ -84,12 +99,12 @@ class CallVisitor(ast.NodeVisitor):
         # if isinstance(parent, ast.Call):
         #     for arg in parent.args:
         #         self.transform("arg", arg, node)
-    def visit_Load(self, node):
+    # def visit_Load(self, node):
         # print(node, ' ', node)
-        self.generic_visit(node)
+        # self.generic_visit(node)
 
     def visit_Attribute(self, node):
-        # print(f"classe:{self.classe}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node.value.id}, Attr: {node.attr}")
+        # print(f"file:{self.filename}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node._attributes}, Attr: {node.attr}")
         # print(node.lineno, ' ', node.value.__class__)
         att = node.value
         if isinstance(att, ast.Name):
@@ -117,9 +132,13 @@ class CallVisitor(ast.NodeVisitor):
                 # module_temp = self.chamadas[node.id]
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
-                    if parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0:
-                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.classe}, func:{self.funcao}")
-                        self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
+                    if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0):# and (self.p):
+                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p :{self.p}")
+                        self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
+                        # self.p = None
+    
+    
+    
     """
     def visit_Assign(self, node):
         parent = node.value
@@ -172,9 +191,51 @@ class CallVisitor(ast.NodeVisitor):
         print('='*30)
         print(', '.join(list(self.modules)))  # -> 'file_modules'    
         print('='*30)
+        """
+# Attribute(expr value, identifier attr, expr_context ctx)
+    def parse_attr(self, attribute):
+        if isinstance(attribute.value, ast.Name):
+            print('value attribute: ', attribute.value.id)
+        if isinstance(attribute.value, ast.Attribute):
+            self.parse_attr(attribute.value)
+        print('name attribute: ', attribute.attr)
 
-    # count = 0
+    # Compare(expr left, cmpop* ops, expr* comparators)
+    def parse_compare(self, compare):
+        if isinstance(compare.left, ast.Name):
+            print('left compare: ', compare.left.id)
+        for comparator in compare.comparators:    
+            if isinstance(comparator, ast.Constant):
+                print('comparators compare: ', comparator.value)            
     
+    # Call(expr func, expr* args, keyword* keywords)
+    def parse_call(self, call):
+        # print('call func: ', call.func)
+        if isinstance(call.func, ast.Name):
+            print('call func id: ', call.func.id)
+        if isinstance(call.func, ast.Attribute):
+            self.parse_attr(call.func)
+        for arg in call.args:    
+            if isinstance(arg, ast.Constant):
+                print('call args: ', arg.value)
+    
+    def visit_Compare(self, node):
+        # print(f'visit_Compare: {node.lineno} -> {node}')
+        self.parse_compare(node)
+        ast.NodeVisitor.generic_visit(self, node)
+    
+    def visit_If(self, node):
+        # print(f'\tif: {node}')
+        # counts=1
+        if isinstance(node.test, ast.Attribute):
+            self.parse_attr(node.test)
+        # if isinstance(node.test, ast.Compare):
+        #     self.parse_compare(node.test)
+        if isinstance(node.test, ast.Call):
+            self.parse_call(node.test)
+        ast.NodeVisitor.generic_visit(self, node)   
+    # count = 0
+    """
     # # Attribute(expr value, identifier attr, expr_context ctx)
     # def parse_attr(self, attribute):
     #     if isinstance(attribute.value, ast.Name):
@@ -248,21 +309,24 @@ if __name__ == '__main__':
     # project_dir = "data/django/django/tests/"
     # project_dir = "data/flask/"
     # project_dir = "data/requests/tests"
-    project_dir = "data/ansible/test"
+    project_dir = "data/ansible2/test"
+    project_name = "ansible"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
+        filename = str(python_file).replace(project_dir,"")
+        # if not 'test' in filename: continue #only test files
+
         # print(python_file)
         # """
         try:
-            if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
-                # print(f'has test: {python_file}')
-                pass
-            else:
-                # print('no test')
-                pass
-            filename = str(python_file).replace(project_dir,"")
+            # if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
+            #     # print(f'has test: {python_file}')
+            #     pass
+            # else:
+            #     # print('no test')
+            #     pass
             parser = ast.parse(open(python_file).read())
-            monitor = CallVisitor(libs_os, filename)
+            monitor = CallVisitor(libs_os, project_name,"bad8843124a50493141a3e3d7920353239021389", filename)
             monitor.visit(parser)
             if not monitor.modules: # continue
                 # print('no modules')
@@ -285,6 +349,8 @@ if __name__ == '__main__':
             print('erro', python_file) 
                     # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
     heads = ['linhas', 'module', 'package', 'file', 'function']
-    writer = WriterCSV(name="packages_os", path="analysis")
+    writer = WriterCSV(name=f'packages_os_{project_name.replace("/","_")}', path="analysis")
     writer.write(head=heads, rows=pacotes) 
+    
+    
     # """
