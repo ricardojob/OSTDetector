@@ -4,9 +4,11 @@ from pathlib import Path
 from monitor import all_files
 from writercsv import WriterCSV
 
+DEBUG = False
 
-class CallVisitor(ast.NodeVisitor):
-    def __init__(self, libs, project_name, project_hash, file):   
+class CallVisitor(ast.NodeVisitor):         
+       # if e compare
+    def __init__(self, libs, project_name, project_hash, file, decorator):   
         self.project_name = project_name
         self.project_hash = project_hash
         self.filename = file
@@ -17,8 +19,106 @@ class CallVisitor(ast.NodeVisitor):
         # self.libs_os.update(libs)
         self.chamadas = dict()
         self.package_os = []
-        self.p=None
+        self.p=None   
+        self.decorator = decorator
+        self.razions = []
+        self.razion = dict()
+        self.classe = ""
         
+    def flatten_attr(self, node):
+        if isinstance(node, ast.Attribute):
+            return str(self.flatten_attr(node.value)) + '.' + node.attr
+        elif isinstance(node, ast.Name):
+            return str(node.id)
+        else:
+            pass    
+    def debug(self, msg):
+        if DEBUG:
+            print(f'[debug] {self.classe} - {self.funcao}: {msg}')
+    # Attribute(expr value, identifier attr, expr_context ctx)
+    def parse_attr(self, attribute):
+        # if isinstance(attribute, ast.Name):
+        #     print('NAME: ', attribute.id)
+        if isinstance(attribute.value, ast.Attribute):
+            # print('value Attribute: ', attribute.value)
+            # print('modules: ', self.parse_attr(attribute.value))
+            self.parse_attr(attribute.value)
+            # self.razion['module'] = valor
+        if isinstance(attribute.value, ast.Name):
+            # print('value attribute id: ', attribute.value.id)
+            self.razion['module'] = attribute.value.id
+        # print(f'def attribute: {attribute.attr}, {attribute.value}' )
+        if not 'package' in self.razion:
+            self.razion['package'] = attribute.attr
+            # print(f'[p] - {self.razion}')
+
+    # Compare(expr left, cmpop* ops, expr* comparators)
+    def parse_compare(self, compare):
+        self.debug(f'[compare] {compare.comparators}, left: {compare.left}')
+        if isinstance(compare.left, ast.Attribute):
+            self.parse_attr(compare.left)
+        # if isinstance(compare.left, ast.Name):
+        #     print('left compare: ', compare.left.id)
+            # pass
+        for comparator in compare.comparators:    
+            if isinstance(comparator, ast.Constant):
+                self.debug(f'comparators compare: {comparator.value}')
+                self.razion['platform'] = comparator.value
+    # Call(expr func, expr* args, keyword* keywords)
+    def parse_call(self, node):
+        self.debug(f'[c] {node.func}')    
+        # print(f'[c] - {node.func.value.value.id} , {node.keywords}, {node.lineno}')
+        if isinstance(node.func, ast.Attribute):
+            self.parse_attr(node.func)
+        # self.parse_attr(node.func)
+        for arg in node.args:    
+            # if isinstance(arg, ast.Compare):
+            #     print('oiiiiaaa')
+            if isinstance(arg, ast.Constant):
+                self.razion['platform'] = arg.value
+                self.debug(f'[p] call platform: {arg.value} ')
+
+    def parse_decorator(self, node):
+        
+        for d in node.decorator_list:
+            if not isinstance(d, ast.Call):
+                continue
+            decoratorAtt = self.flatten_attr(d.func)
+            if not decoratorAtt in self.decorator:
+                continue
+            # self.count+=1
+            # print(f'({self.count})Decorator: [ {decoratorAtt} ]linha: {node.lineno} - {node.name} ')#, ' ', self.razion)
+            self.debug(f'[d]: {decoratorAtt}, func line: {node.lineno}, func name: {node.name} , (d): {d}')
+            self.razion = dict()
+            self.razion['decorator'] = decoratorAtt
+            for a in d.keywords:
+                if isinstance(a.value, ast.Constant):
+                    self.debug(f'[k] line: {a.value.lineno}, val: {a.value.value}, arg: {a.arg}')
+                    if 'reason' == a.arg:
+                        self.razion['razion'] = a.value.value
+                    # arg: {a.arg} ,value: {a.value}, type: {a} 
+            
+            for arg in d.args:
+                # print(f'ARGS: {arg}')
+                if isinstance(arg, ast.Call):
+                    self.parse_call(arg)
+                if isinstance(arg, ast.Compare):
+                    self.parse_compare(arg)
+                if isinstance(arg, ast.Constant): # when not definier a reason at annotation
+                    self.razion['razion'] = arg.value
+                #     print(f'[a]{arg.value}')
+            self.debug(f'[r] razion: {self.razion}')
+            self.razion ['func_def'] = self.funcao
+            self.razion ['class_def'] = self.classe
+            if 'module' in self.razion:
+                self.razions.append(self.razion)
+            self.razion = dict()
+            self.debug(f'')
+
+
+    
+ 
+                      
     def tratar_modulos(self, node, module, package):
         key = node.name
         if node.asname:
@@ -49,22 +149,42 @@ class CallVisitor(ast.NodeVisitor):
             self.modules.add(module)
         self.generic_visit(node) 
 
+# FunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns, string? type_comment)
     def visit_FunctionDef(self, node):
+        # print('visit_FunctionDef', node.name)
         self.funcao = node.name
-        self.generic_visit(node)
-                    
+        # self.razion ['func_def'] = node.name
+        self.parse_decorator(node)
+        self.generic_visit(node)                    
+        
+    # AsyncFunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns,string? type_comment)
     def visit_AsyncFunctionDef(self, node):
+        # print('visit_AsyncFunctionDef', node.name)
         self.funcao = node.name
-        self.generic_visit(node)
+        # self.razion ['func_def'] = node.name
+        self.parse_decorator(node)
+        self.generic_visit(node)    
 
+    # ClassDef(identifier name,expr* bases,keyword* keywords,stmt* body,expr* decorator_list)
     def visit_ClassDef(self, node):
-        # print(50*'...')
-        # print(f'class: {node.name} mod: {self.modules} cha:{self.chamadas}')
-        # print(50*'...')
-        # self.classe = node.name
-        # ast.NodeVisitor.generic_visit(self, node)
-        self.funcao = ''
+        # print('visit_ClassDef', node.name)
+        self.classe = node.name
+        self.funcao = ""
+        # self.razion ['class_def'] = node.name
+        self.parse_decorator(node)
         self.generic_visit(node)
+        
+    # def visit_FunctionDef(self, node):
+    #     self.funcao = node.name
+    #     self.generic_visit(node)
+                    
+    # def visit_AsyncFunctionDef(self, node):
+    #     self.funcao = node.name
+    #     self.generic_visit(node)
+
+    # def visit_ClassDef(self, node):
+    #     self.funcao = ''
+    #     self.generic_visit(node)
    
     def visit_Compare(self, node):
         self.p = node
@@ -75,7 +195,7 @@ class CallVisitor(ast.NodeVisitor):
         self.p = node
         self.generic_visit(node)
         self.p = None
-    
+    """
     def verifica_attibute(self, node):
         if isinstance(node, ast.Attribute): 
             # self.p = node 
@@ -146,7 +266,7 @@ class CallVisitor(ast.NodeVisitor):
     # def visit_Load(self, node):
         # print(node, ' ', node)
         # self.generic_visit(node)
-
+"""
     def visit_Attribute(self, node):
         # print(f"file:{self.filename}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node._attributes}, Attr: {node.attr}")
         # print(node.lineno, ' ', node.value.__class__)
@@ -178,52 +298,12 @@ class CallVisitor(ast.NodeVisitor):
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
-                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p}")
+                        self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p}")
                         self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
                         self.p = None
     
     
-    
-    """
-    def visit_Assign(self, node):
-        parent = node.value
-        if isinstance(parent, ast.Attribute):
-            package = parent.value
-            if isinstance(package, ast.Name):
-                if package.id and package.id in self.chamadas: 
-                    # print(package.id, '->', package.lineno)
-                    module_temp = self.chamadas[package.id]
-                    # mod = self.chamadas[att.id]
-                    # print(f"linha: {node.value.lineno}, module: {module_temp[0]}, package: {node.value.attr}")
-                    if module_temp[0] in self.libs_os:
-                        targets = node.targets[0]
-                        def tratar_pacotes(target):
-                            if parent.attr in self.libs_os[module_temp[0]]:
-                                self.chamadas[target.id] = [module_temp[0], parent.attr] # package_name -> [package, module]
-                                print(f"  linha: {package.lineno}, module: {module_temp[0]}, call: {parent.attr} -- Assign, classe:{self.classe}, func:{self.funcao}")
-                                self.package_os.append([package.lineno, module_temp[0], parent.attr,self.classe,self.funcao])
-                        # print(target.__class__)
-                        if isinstance(targets, ast.Attribute):
-                            if targets.value:
-                                tratar_pacotes(targets.value)
-                        if isinstance(targets, ast.Name):
-                            if targets:
-                                tratar_pacotes(targets)
-            # if isinstance(att, ast.Call):    
-            #     print(f"linha: {node.value.lineno}, module: CALL, call: {node.value.attr}, att: {att}")
-        # print('-'*30)
-        self.generic_visit(node) 
-    """    
-    # def visit_Call(self, node):
-    #     function = node.func
-    #     # print(f'Call  dicts: {node.__dict__}')
-    #     self.transform("call",function)
-    #     for arg in node.args:
-    #         self.transform("arg", arg)
-    #     for key in node.keywords: # todo: tratamento ao conditional/decorator
-    #         self.transform("keys", key.arg)
-    #     self.generic_visit(node) 
-        
+            
     def modules(self):
         return self.modules
     
