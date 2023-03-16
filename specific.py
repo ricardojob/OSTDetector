@@ -4,6 +4,7 @@ from pathlib import Path
 from monitor import all_files
 from writercsv import WriterCSV
 
+# DEBUG = True
 DEBUG = False
 
 class CallVisitor(ast.NodeVisitor):         
@@ -96,6 +97,10 @@ class CallVisitor(ast.NodeVisitor):
                     self.debug(f'[k] line: {a.value.lineno}, val: {a.value.value}, arg: {a.arg}')
                     if 'reason' == a.arg:
                         self.razion['razion'] = a.value.value
+                        self.razion['line'] = a.value.lineno
+                        self.razion['filename'] = self.filename
+                        self.razion['project_name'] = self.project_name
+                        self.razion['project_hash'] = self.project_hash
                     # arg: {a.arg} ,value: {a.value}, type: {a} 
             
             for arg in d.args:

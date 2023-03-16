@@ -16,6 +16,7 @@ libs_os =  dict()
 libs_os['sys'] = [ 'platform', 'getwindowsversion']
 libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
 libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
+decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 pacotes = []
 project_dir = "data/ansible2/test"
 project_name = "ansible"
@@ -25,9 +26,9 @@ try:
     monitor = CallVisitor(libs_os, project_name,
                           "bad8843124a50493141a3e3d7920353239021389", 
                           filename,
-                          ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf'])
+                          decorators)
     monitor.visit(parser)
-    if not monitor.modules: # continue
+    """if not monitor.modules:  #continue
         # print('no modules')
         pass
     else:
@@ -38,7 +39,7 @@ try:
             pass
         else:
             # print('no modules') # -> 'file_modules_excludes'
-            pass
+            pass """
     # file_list.append(str(filename))
     # monitor.print_chamadas()
     if len(monitor.package_os) > 0:
