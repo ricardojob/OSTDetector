@@ -1,9 +1,9 @@
 import ast
 from get_repo import Repo
-from monitor import MonitorVisitor, all_files
+from monitor import all_files
 from writercsv import WriterCSV
-from pathlib import Path
-from call_module import CallVisitor
+# from pathlib import Path
+from specific import CallVisitor
 import csv
 
 def flask():
@@ -19,6 +19,12 @@ def dev():
     dir = "data/ansible2"
     name = 'ansible/ansible'
     commit_hash = 'bad8843124a50493141a3e3d7920353239021389'
+    return name, commit_hash, dir
+
+def dev2():
+    dir = "data/django"
+    name = 'django/django'
+    commit_hash = '9d9ec0c79f52efad3a4d3f6ac4644d5c9fb1d22c'
     return name, commit_hash, dir
 
 def local():
@@ -69,7 +75,8 @@ if __name__ == '__main__':
     libs_os['sys'] = [ 'platform', 'getwindowsversion']
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
-   
+    decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
+
     
     with open(csv_filename, 'r') as file:
         reader = csv.reader(file)
@@ -85,7 +92,8 @@ if __name__ == '__main__':
             # project_hash = '1'
             # project_dir = '/Users/job/Documents/dev/doutorado/study/skip-platform/data/'+project_name
             # project_name, project_hash, project_dir = clone(row[0])
-            project_name, project_hash, project_dir = dev()
+            # project_name, project_hash, project_dir = dev()
+            project_name, project_hash, project_dir = dev2()
             
             pacotes = []
 
@@ -97,7 +105,6 @@ if __name__ == '__main__':
                 if not 'test' in filename: continue #only test files
                 # fill data
 
-
                 try:
                     # if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
                     #     # print(f'has test: {python_file}')
@@ -106,35 +113,50 @@ if __name__ == '__main__':
                     #     # print('no test')
                     #     pass
                     parser = ast.parse(open(python_file).read())
-                    monitor = CallVisitor(libs_os, project_name, project_hash, filename)
+                    monitor = CallVisitor(libs_os, 
+                                          project_name,
+                                          project_hash,
+                                          filename,
+                                          decorators)                    
                     monitor.visit(parser)
-                    if not monitor.modules: # continue
+                    if not monitor.modules:  continue
                         # print('no modules')
-                        pass
-                    else:
-                        # print(', '.join(list(monitor.modules)))  # -> 'file_modules'
-                        # monitor.print_modules()
-                        if set(libs_os.keys()).intersection(monitor.modules): # verify file with modules -> 'file_modules_excludes'
-                            # print(f'has modules: {len(monitor.modules)}') # -> 'file_modules_excludes'
-                            pass
-                        else:
-                            # print('no modules') # -> 'file_modules_excludes'
-                            pass
+                    #     pass
+                    # else:
+                    #     # print(', '.join(list(monitor.modules)))  # -> 'file_modules'
+                    #     # monitor.print_modules()
+                    #     if set(libs_os.keys()).intersection(monitor.modules): # verify file with modules -> 'file_modules_excludes'
+                    #         # print(f'has modules: {len(monitor.modules)}') # -> 'file_modules_excludes'
+                    #         pass
+                    #     else:
+                    #         # print('no modules') # -> 'file_modules_excludes'
+                    #         pass
                     # file_list.append(str(filename))
                     # monitor.print_chamadas()
-                    if len(monitor.package_os) > 0:
+                    # if len(monitor.package_os) > 0:
                         # row = []
                         # row.append(project_name)
                         # row.append(project_hash)
                     
+                        # pacotes.extend(monitor.package_os)
+                    if len(monitor.package_os) > 0:
                         pacotes.extend(monitor.package_os)
-                
+                        print(10*'---', f'LISTANDO os packs: {filename}')
+                        for row in monitor.package_os:
+                            print(f'{row[2]} -> {row[3]}.{row[4]}')
+                            print(row)
+                            
+                    if len(monitor.razions) > 0:
+                        print(10*'---', f'LISTANDO os razões: {filename}')
+                        for row in monitor.razions:
+                            print(f'{row["line"]} -> {row["module"]}.{row["package"]}')                
+                            # print(row)
                 except SyntaxError as ex:
                     print('erro', python_file) 
                     # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
-        heads = ['project_name','project_hash','line', 'module', 'method', 'file', 'function']
-        writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}', path="analysis")
-        writer.write(head=heads, rows=pacotes)                 
+        # heads = ['project_name','project_hash','line', 'module', 'method', 'file', 'function']
+        # writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}', path="analysis")
+        # writer.write(head=heads, rows=pacotes)                 
 """
                 try:
                     parser = ast.parse(open(python_file).read())

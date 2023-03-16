@@ -25,6 +25,7 @@ class CallVisitor(ast.NodeVisitor):
         self.razions = []
         self.razion = dict()
         self.classe = ""
+        self.atts = []
         
     def flatten_attr(self, node):
         if isinstance(node, ast.Attribute):
@@ -48,11 +49,13 @@ class CallVisitor(ast.NodeVisitor):
         if isinstance(attribute.value, ast.Name):
             # print('value attribute id: ', attribute.value.id)
             self.razion['module'] = attribute.value.id
-        # print(f'def attribute: {attribute.attr}, {attribute.value}' )
+            self.razion['line'] = attribute.lineno
+
+            # print(f'def attribute: {attribute.attr}, {attribute.value} {attribute}' )
         if not 'package' in self.razion:
             self.razion['package'] = attribute.attr
             # print(f'[p] - {self.razion}')
-
+        self.atts.append(attribute)
     # Compare(expr left, cmpop* ops, expr* comparators)
     def parse_compare(self, compare):
         self.debug(f'[compare] {compare.comparators}, left: {compare.left}')
@@ -98,9 +101,7 @@ class CallVisitor(ast.NodeVisitor):
                     if 'reason' == a.arg:
                         self.razion['razion'] = a.value.value
                         self.razion['line'] = a.value.lineno
-                        self.razion['filename'] = self.filename
-                        self.razion['project_name'] = self.project_name
-                        self.razion['project_hash'] = self.project_hash
+
                     # arg: {a.arg} ,value: {a.value}, type: {a} 
             
             for arg in d.args:
@@ -116,7 +117,17 @@ class CallVisitor(ast.NodeVisitor):
             self.razion ['func_def'] = self.funcao
             self.razion ['class_def'] = self.classe
             if 'module' in self.razion:
-                self.razions.append(self.razion)
+                pack = self.razion ['package']
+                mod = self.razion ['module']
+                lib_and_module = any(pack in item for item in self.libs_os.values()) and (mod in self.libs_os)
+                if lib_and_module:
+                    self.razion['filename'] = self.filename
+                    self.razion['project_name'] = self.project_name
+                    self.razion['project_hash'] = self.project_hash
+                    self.razions.append(self.razion)
+                    
+                    # print(f'{mod}.{pack} -> {lib_and_module}')
+                    
             self.razion = dict()
             self.debug(f'')
 
@@ -178,19 +189,7 @@ class CallVisitor(ast.NodeVisitor):
         # self.razion ['class_def'] = node.name
         self.parse_decorator(node)
         self.generic_visit(node)
-        
-    # def visit_FunctionDef(self, node):
-    #     self.funcao = node.name
-    #     self.generic_visit(node)
-                    
-    # def visit_AsyncFunctionDef(self, node):
-    #     self.funcao = node.name
-    #     self.generic_visit(node)
-
-    # def visit_ClassDef(self, node):
-    #     self.funcao = ''
-    #     self.generic_visit(node)
-   
+           
     def visit_Compare(self, node):
         self.p = node
         self.generic_visit(node)
@@ -304,8 +303,11 @@ class CallVisitor(ast.NodeVisitor):
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p}")
-                        self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
-                        self.p = None
+                        self.debug(f'atributo: {parent} -> {parent in self.atts}')
+                        if not parent in self.atts:
+                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
+                            self.p = None
+                        
     
     
             
