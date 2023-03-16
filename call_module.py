@@ -82,7 +82,7 @@ class CallVisitor(ast.NodeVisitor):
             # print(f"linha: {node.lineno}, dict: {self.p}, call: {node}")
             if any(node.attr in item for item in self.libs_os.values()): 
                 if isinstance(node.value, ast.Name) and node.value.id in self.libs_os: 
-                    print(f"linha: {node.lineno}, dict: {self.p}, node: {node.attr}, call: {node.value.id}")
+                    # print(f"linha: {node.lineno}, dict: {self.p}, node: {node.attr}, call: {node.value.id}")
                     self.p = node
             if isinstance(node.value, ast.Attribute):
                 self.verifica_attibute(node.value)
@@ -178,7 +178,7 @@ class CallVisitor(ast.NodeVisitor):
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
-                        print(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p}")
+                        print(f" linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} {parent}")
                         self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
                         self.p = None
     
@@ -389,13 +389,18 @@ if __name__ == '__main__':
             # monitor.print_chamadas()
             if len(monitor.package_os) > 0:
                 pacotes.extend(monitor.package_os)
+                print(10*'---', f'LISTANDO os packs: {filename}')
+                for row in monitor.package_os:
+                    # print(f'{row[2]} -> {row[3]}.{row[4]}')
+                    print(row)
+                            
         
         except SyntaxError as ex:
             print('erro', python_file) 
                     # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
-    heads = ['linhas', 'module', 'package', 'file', 'function']
-    writer = WriterCSV(name=f'packages_os_{project_name.replace("/","_")}', path="analysis")
-    writer.write(head=heads, rows=pacotes) 
+    # heads = ['linhas', 'module', 'package', 'file', 'function']
+    # writer = WriterCSV(name=f'packages_os_{project_name.replace("/","_")}', path="analysis")
+    # writer.write(head=heads, rows=pacotes) 
     
     
     # """

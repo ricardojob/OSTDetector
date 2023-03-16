@@ -26,6 +26,7 @@ class CallVisitor(ast.NodeVisitor):
         self.razion = dict()
         self.classe = ""
         self.atts = []
+        self.platform = ''
         
     def flatten_attr(self, node):
         if isinstance(node, ast.Attribute):
@@ -68,6 +69,7 @@ class CallVisitor(ast.NodeVisitor):
             if isinstance(comparator, ast.Constant):
                 self.debug(f'comparators compare: {comparator.value}')
                 self.razion['platform'] = comparator.value
+                self.platform = comparator.value
     # Call(expr func, expr* args, keyword* keywords)
     def parse_call(self, node):
         self.debug(f'[c] {node.func}')    
@@ -80,6 +82,7 @@ class CallVisitor(ast.NodeVisitor):
             #     print('oiiiiaaa')
             if isinstance(arg, ast.Constant):
                 self.razion['platform'] = arg.value
+                self.platform = arg.value
                 self.debug(f'[p] call platform: {arg.value} ')
 
     def parse_decorator(self, node):
@@ -302,12 +305,31 @@ class CallVisitor(ast.NodeVisitor):
                 if mod[0] in self.libs_os:
                 #     # print(f'\tlinha: {node.lineno}, module: {mod[0]}, package {node.id}')        
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
-                        self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p}")
+                        if isinstance(self.p, ast.Compare):
+                            for comparator in self.p.comparators:    
+                                if isinstance(comparator, ast.Constant):
+                                    self.platform = comparator.value
+                                    # print(f'plat: {self.platform} - compare')
+                        # if isinstance(self.p, ast.If):
+                        #     # print(f'{self.p.test} - {self.p.}')
+                        #     # for comparator in self.p.test.comparators:    
+                        #     #     if isinstance(comparator, ast.Constant):
+                        #     #         self.platform = comparator.value
+                        #     #         print(f'plat: {self.platform} -if')
+                        #     if isinstance(self.p.test, ast.Call):
+                        #         for arg in self.p.test.args:    
+                        #             if isinstance(arg, ast.Constant):
+                        #                 self.platform = arg.value
+                        #                 print(f'plat: {self.platform} - call')
+                                              
+                        self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
-                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
+                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr, self.platform, self.filename,self.funcao])
                             self.p = None
+                            self.platform = ''
                         
+                            
     
     
             
