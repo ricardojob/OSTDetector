@@ -310,16 +310,16 @@ class CallVisitor(ast.NodeVisitor):
                                 if isinstance(comparator, ast.Constant):
                                     self.platform = comparator.value
                                     # print(f'plat: {self.platform} - compare')
-                        # if isinstance(self.p, ast.If):
-                        #     # print(f'{self.p.test} - {self.p.}')
-                        #     # for comparator in self.p.test.comparators:    
-                        #     #     if isinstance(comparator, ast.Constant):
-                        #     #         self.platform = comparator.value
-                        #     #         print(f'plat: {self.platform} -if')
-                        #     if isinstance(self.p.test, ast.Call):
-                        #         for arg in self.p.test.args:    
-                        #             if isinstance(arg, ast.Constant):
-                        #                 self.platform = arg.value
+                        if isinstance(self.p, ast.If):
+                            # print(f'{self.p.test} - {self.p.}')
+                            # for comparator in self.p.test.comparators:    
+                            #     if isinstance(comparator, ast.Constant):
+                            #         self.platform = comparator.value
+                            #         print(f'plat: {self.platform} -if')
+                            if isinstance(self.p.test, ast.Call):
+                                for arg in self.p.test.args:    
+                                    if isinstance(arg, ast.Constant):
+                                        self.platform = arg.value
                         #                 print(f'plat: {self.platform} - call')
                                               
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
