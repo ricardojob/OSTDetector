@@ -63,7 +63,10 @@ if __name__ == '__main__':
                                           filename,
                                           decorators)                    
                     monitor.visit(parser)
-                    if not monitor.modules:  continue #only files declare libs_os
+                    
+                    #only files declare libs_os
+                    if not monitor.modules:  continue 
+                    if not set(libs_os.keys()).intersection(monitor.modules): continue
                     
                     if len(monitor.package_os) > 0:
                         packages.extend(monitor.package_os)
@@ -71,10 +74,8 @@ if __name__ == '__main__':
                     if len(monitor.razions) > 0:
                         for row in monitor.razions:
                             row_temp = []    
-                            # [row_temp.extend([v]) for v in row.values()]
                             for v in heads_decorator:
                                 row_temp.extend([row[v]])
-                                # print(f'v: {v} -> r: {row[v]}, l: {len(row_temp)}')
                             razions.append(row_temp)
                 except SyntaxError as ex:
                     print(f'SyntaxError: {ex} in {python_file}') 
