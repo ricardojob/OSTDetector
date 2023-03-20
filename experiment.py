@@ -6,8 +6,8 @@ from specific import CallVisitor
 import csv
 
 def dev():
-    dir = "data/ansible2"
-    name = 'ansible/ansible'
+    dir = "data/flask"
+    name = 'data/flask'
     commit_hash = 'bad8843124a50493141a3e3d7920353239021389'
     return name, commit_hash, dir
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
                 has_head_readed = True
                 continue  
             # count = 0
-            project_name, project_hash, project_dir = clone(row[0])
-            # project_name, project_hash, project_dir = dev()
+            # project_name, project_hash, project_dir = clone(row[0])
+            project_name, project_hash, project_dir = dev()
             
             packages = []
             razions = []

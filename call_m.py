@@ -1,4 +1,4 @@
-from specific import CallVisitor
+from specific_skip import CallVisitor
 import ast
 
 # python_file = "data/django/django/tests/asgi/tests.py"
@@ -9,8 +9,9 @@ import ast
 # python_file = "input/sys-sample.py"
 # python_file = "input/import-sample.py"
 # python_file = "data/django/django/tests/mail/tests.py"
-python_file = "data/ansible2/test/support/integration/plugins/modules/timezone.py"
+# python_file = "data/ansible/test/support/integration/plugins/modules/timezone.py"
 # python_file = "data/ansible2/test/units/utils/test_encrypt.py"
+python_file = "input/treat_skip.py"
 
 libs_os =  dict()
 libs_os['sys'] = [ 'platform', 'getwindowsversion']
@@ -45,15 +46,16 @@ try:
     if len(monitor.package_os) > 0:
         pacotes.extend(monitor.package_os)
         
-        print(50*'---', 'LISTANDO os packs:')
+        print(5*'---', 'LISTANDO os packs:')
         for row in monitor.package_os:
             print(row)
             
     if len(monitor.razions) > 0:
-        print(50*'---', 'LISTANDO os razões:')
+        print(5*'---', 'LISTANDO os razões:')
         for row in monitor.razions:
             print(row)
-            
+    # monitor.print_modules()
+    # monitor.print_chamadas()        
 except SyntaxError as ex:
     print('erro', python_file) 
                 # self.package_os.append([node.lineno, mod[0], parent.attr,self.classe,self.funcao])
