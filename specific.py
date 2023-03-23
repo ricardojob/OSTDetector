@@ -94,6 +94,7 @@ class CallVisitor(ast.NodeVisitor):
         if isinstance(attribute.value, ast.Name):
             self.razion['module'] = attribute.value.id
             self.razion['line'] = attribute.lineno
+            self.razion['url'] = self.gerar_url(attribute.lineno)
             
         if not 'package' in self.razion:
             self.razion['package'] = attribute.attr
@@ -140,6 +141,7 @@ class CallVisitor(ast.NodeVisitor):
                     if 'reason' == a.arg:
                         self.razion['razion'] = a.value.value
                         self.razion['line'] = a.value.lineno
+                        self.razion['url'] = self.gerar_url(a.value.lineno)
             for arg in d.args:
                 if isinstance(arg, ast.Call):
                     self.parse_call(arg)
@@ -158,6 +160,7 @@ class CallVisitor(ast.NodeVisitor):
                     self.razion['filename'] = self.filename
                     self.razion['project_name'] = self.project_name
                     self.razion['project_hash'] = self.project_hash
+                    
                     self.razions.append(self.razion)
                     
             self.razion = dict()
@@ -193,9 +196,29 @@ class CallVisitor(ast.NodeVisitor):
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
-                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr, self.platform, self.filename,self.funcao])
+                            url = self.gerar_url(node.lineno)
+                            method_type = self.gerar_tipo_metodo()
+                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                                                    parent.attr, self.platform, self.filename,self.funcao, 
+                                                    method_type, url])
+                            
+                          
                             self.p = None
                             self.platform = ''
+    def gerar_url(self, line):
+          # https://github.com/ansible/ansible/blob/4ea50cef23c3dc941b2e8dc507f37a962af6e2c8
+          # /test/support/integration/plugins/modules/timezone.py#L107
+          return f'https://github.com/{self.project_name}/blob/{self.project_hash}{self.filename}#L{line}'  
+    
+    def gerar_tipo_metodo(self):
+        method_type = 'support'
+        if self.funcao.startswith("setUp") or self.funcao.startswith("tearDown"):
+            method_type = 'configuration'
+        elif self.funcao.startswith("test_"):
+            method_type = 'method_test'    
+        return method_type
+        # print(f'{method_type} -> {row}')
+        
     def debug(self, msg):
         if DEBUG:
             print(f'[debug] {self.classe} - {self.funcao}: {msg}')
@@ -210,8 +233,8 @@ if __name__ == '__main__':
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     pacotes = []
-    project_dir = "data/ansible2/test"
-    project_name = "ansible"
+    project_dir = "data1/ansible2"
+    project_name = "ansible/ansible"
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 
     for python_file in all_files(project_dir):
@@ -219,15 +242,15 @@ if __name__ == '__main__':
         filename = str(python_file).replace(project_dir,"")
         try:
             parser = ast.parse(open(python_file).read())
-            monitor = CallVisitor(libs_os, project_name,"bad8843124a50493141a3e3d7920353239021389", filename,decorators)
+            monitor = CallVisitor(libs_os, project_name,"b63812bc08fd00fd772c28a2604f77f487d23104", filename,decorators)
             monitor.visit(parser)
 
             if len(monitor.package_os) > 0:
                 pacotes.extend(monitor.package_os)
                 print(10*'---', f'LISTANDO os packs: {filename}')
                 for row in monitor.package_os:
-                    print(f'{row[2]} -> {row[3]}.{row[4]}')
-                    # print(row)
+                    # print(f'{row[2]} -> {row[3]}.{row[4]}')
+                    print(row)
         
         except SyntaxError as ex:
             print('erro', python_file) 
