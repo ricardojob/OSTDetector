@@ -257,8 +257,6 @@ class CallVisitor(ast.NodeVisitor):
                         #                 print(f'plat: {self.platform} - call')
                             if isinstance(self.p.test, ast.UnaryOp):
                                 self.tratar_unary(self.p.test)
-                        if isinstance(self.p, ast.Call):
-                                    
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
