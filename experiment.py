@@ -6,9 +6,18 @@ from specific import CallVisitor
 import csv
 
 def dev():
-    dir = "data/flask"
-    name = 'data/flask'
-    commit_hash = 'bad8843124a50493141a3e3d7920353239021389'
+    
+    dir = "data1/ansible2"
+    name = 'ansible/ansible'
+    commit_hash = 'b63812bc08fd00fd772c28a2604f77f487d23104'
+    
+    # dir = "data1/flask"
+    # name = 'data1/flask'
+    # commit_hash = 'bad8843124a50493141a3e3d7920353239021389'
+    
+    
+    #     project_dir = "data1/ansible2"
+    # project_name = "ansible/ansible"
     return name, commit_hash, dir
 
 def clone(repo_name):
@@ -31,8 +40,8 @@ if __name__ == '__main__':
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 
-    heads_decorator = ['project_name','project_hash', 'line', 'module', 'package', 'platform', 'decorator', 'razion',  'filename','func_def', 'class_def']
-    heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function']
+    heads_decorator = ['project_name','project_hash', 'line', 'module', 'package', 'platform', 'decorator', 'razion',  'filename','func_def', 'class_def', 'url']
+    heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function', 'method_type','url']
     packages_all = []
     razions_all = []
     with open(csv_filename, 'r') as file:

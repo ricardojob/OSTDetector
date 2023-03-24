@@ -29,6 +29,7 @@ class CallVisitor(ast.NodeVisitor):
         self.platform = ''
         self.operator = 'Eq' # in call
         self.negative = False
+  
         
     def flatten_attr(self, node):
         if isinstance(node, ast.Attribute):
@@ -250,9 +251,9 @@ class CallVisitor(ast.NodeVisitor):
                             # self.debug(f'ops: {str(self.p.ops)}, negative: {self.negative}')
                             self.operator = str(self.p.ops[0].__class__.__name__)
                             self.debug(f'operator: {self.operator}, linha: {node.lineno}')
-                            # if self.negative:
-                            #     self.operator = 'NotEq'
-                            # else: self.operator = 'Eq'
+                            if self.negative:
+                                self.operator = 'NotEq'
+                            else: self.operator = 'Eq'
                         if isinstance(self.p, ast.If):
                             # self.debug(f'isinstance(self.p, ast.If) > {self.p.test} - {self.p}')
                             # for comparator in self.p.test.comparators:    
@@ -282,7 +283,10 @@ class CallVisitor(ast.NodeVisitor):
 >>>>>>> 066c95a6051cbbea03b5f75b1199f9733e9e6280
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
-                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr, self.platform, self.filename,self.funcao])
+                            self.package_os.append([
+                                self.project_name, self.project_hash, node.lineno, mod[0], 
+                                parent.attr, self.platform, 
+                                self.filename,self.funcao, self.operator])
                             self.p = None
                             self.platform = ''
                             self.negative = False
@@ -305,6 +309,7 @@ class CallVisitor(ast.NodeVisitor):
         if self.negative:
             self.operator = 'NotEq'
         self.debug(f'tratar_call_compare->> operator: {self.operator}, {node}, call: {node.func} negative:{self.negative}')
+        
         for arg in node.args:    
             if isinstance(arg, ast.Constant):
                 self.platform = arg.value
@@ -313,8 +318,8 @@ class CallVisitor(ast.NodeVisitor):
     def tratar_unary(self, node):
         if not isinstance(node, ast.UnaryOp): return
         
-        if isinstance(node.operand, ast.UnaryOp):
-            return self.tratar_unary(node.operand)
+        # if isinstance(node.operand, ast.UnaryOp):
+        #     return self.tratar_unary(node.operand)
         if isinstance(node.operand, ast.Call):   
             self.tratar_call_compare(node.operand) 
         # print(f'op: {node.op} operand: {node.operand}')
