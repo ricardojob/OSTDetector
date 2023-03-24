@@ -6,11 +6,10 @@ from specific import CallVisitor
 import csv
 
 def dev():
-    
-    
-    dir = "data1/django/django/django"
-    name = 'django/django'
-    commit_hash = "d2b688b966f5d30414899549412d370e1317ddb8"
+
+    dir = "data1/sanic"
+    name = 'sanic/sanic'
+    commit_hash = "6e1c787e5d92edffc59432d772209e49dccf7969"
     
     # dir = "data1/ansible2"
     # name = 'ansible/ansible'
@@ -104,6 +103,7 @@ if __name__ == '__main__':
                         for row in monitor.razions:
                             row_temp = []    
                             for v in heads_decorator:
+                                # print(f"arquivo:{filename} {row['line']} -> {row['module']}.{row['platform']} ")
                                 row_temp.extend([row[v]])
                                 if v == "func_def" and str(row[v]).strip() == "": 
                                     count_class_decorator = count_class_decorator + 1
