@@ -27,6 +27,8 @@ class CallVisitor(ast.NodeVisitor):
         self.classe = ""
         self.atts = []
         self.platform = ''
+        self.operator = 'Eq' # in call
+        self.negative = False
         
     def flatten_attr(self, node):
         if isinstance(node, ast.Attribute):
@@ -70,7 +72,7 @@ class CallVisitor(ast.NodeVisitor):
                 self.debug(f'comparators compare: {comparator.value}')
                 self.razion['platform'] = comparator.value
                 self.platform = comparator.value
-        self.debug(comparator.ops)
+        # self.debug(comparator.ops)
     # Call(expr func, expr* args, keyword* keywords)
     def parse_call(self, node):
         self.debug(f'[c] {node.func}')    
@@ -192,11 +194,13 @@ class CallVisitor(ast.NodeVisitor):
         self.generic_visit(node)
            
     def visit_Compare(self, node):
+        self.debug(f'visit_Compare: {node.lineno}, {node.left}, {node.ops}')
         self.p = node
         self.generic_visit(node)
         self.p = None
     
     def visit_If(self, node):
+        self.debug(f'visit_If: {node.lineno}, {node.test}')
         self.p = node
         self.generic_visit(node)
         self.p = None
@@ -205,7 +209,7 @@ class CallVisitor(ast.NodeVisitor):
 # UnaryOp(unaryop op, expr operand)        
     
     def visit_Attribute(self, node):
-        # print(f"file:{self.filename}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node._attributes}, Attr: {node.attr}")
+        self.debug(f"file:{self.filename}, func:{self.funcao}, linha: {node.lineno}, contexto: att, Attribute:  {node._attributes}, Attr: {node.attr}")
         # print(node.lineno, ' ', node.value.__class__)
         att = node.value
         # self.p = node
@@ -243,30 +247,77 @@ class CallVisitor(ast.NodeVisitor):
                                 if isinstance(comparator, ast.Constant):
                                     self.platform = comparator.value
                                     # print(f'plat: {self.platform} - compare')
-                            self.debug(f'ops: {self.p.ops} ea: {ast.Eq}')
+                            # self.debug(f'ops: {str(self.p.ops)}, negative: {self.negative}')
+                            self.operator = str(self.p.ops[0].__class__.__name__)
+                            self.debug(f'operator: {self.operator}, linha: {node.lineno}')
+                            # if self.negative:
+                            #     self.operator = 'NotEq'
+                            # else: self.operator = 'Eq'
                         if isinstance(self.p, ast.If):
-                            # print(f'{self.p.test} - {self.p.}')
+                            # self.debug(f'isinstance(self.p, ast.If) > {self.p.test} - {self.p}')
                             # for comparator in self.p.test.comparators:    
                             #     if isinstance(comparator, ast.Constant):
                             #         self.platform = comparator.value
                             #         print(f'plat: {self.platform} -if')
                             if isinstance(self.p.test, ast.Call):
-                                for arg in self.p.test.args:    
-                                    if isinstance(arg, ast.Constant):
-                                        self.platform = arg.value
-                        #                 print(f'plat: {self.platform} - call')
+                                self.tratar_call_compare(self.p.test)
+                        #         self.operator = 'Eq'
+                        #         self.debug(f'if.test.call ->> operator: {self.operator}, {self.p.test}, call: {self.p.test.func}')
+                        #         for arg in self.p.test.args:    
+                        #             if isinstance(arg, ast.Constant):
+                        #                 self.platform = arg.value
+                        # #                 print(f'plat: {self.platform} - call')
                             if isinstance(self.p.test, ast.UnaryOp):
+                                self.debug(f'tratando uanyOp')
                                 self.tratar_unary(self.p.test)
+<<<<<<< HEAD
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
+=======
+                            
+                            # self.debug(f'callll ->> {self.p.test}')    
+                            # if isinstance(self.p.test, ast.Call):
+                                
+                                
+                        self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, op: {self.operator} plat: {self.platform}")
+>>>>>>> 066c95a6051cbbea03b5f75b1199f9733e9e6280
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
                             self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr, self.platform, self.filename,self.funcao])
                             self.p = None
                             self.platform = ''
+                            self.negative = False
+    # def visit_Eq(self, node: ast.Eq):
+    #    self.debug(f'eq: {node.__class__.__name__}')
+    #    self.generic_visit(node)  
+    # def visit_NotEq(self, node: ast.NotEq):
+    #    self.debug(f'noteq: {node.__class__.__name__}')
+    #    self.generic_visit(node)
+    
+    
+    def visit_Not(self, node: ast.NotEq):
+       self.negative = not self.negative
+    #    self.debug(f'not: {node.__class__.__name__}, negative: {self.negative}')
+       self.generic_visit(node)        
+    # #    self.negative = not self.negative
+    
+    def tratar_call_compare(self, node):
+        self.operator = 'Eq'
+        if self.negative:
+            self.operator = 'NotEq'
+        self.debug(f'tratar_call_compare->> operator: {self.operator}, {node}, call: {node.func} negative:{self.negative}')
+        for arg in node.args:    
+            if isinstance(arg, ast.Constant):
+                self.platform = arg.value
+#                 print(f'plat: {self.platform} - call')
+
     def tratar_unary(self, node):
         if not isinstance(node, ast.UnaryOp): return
         
-        print(f'op: {node.op} operand: {node.operand}')
+        if isinstance(node.operand, ast.UnaryOp):
+            return self.tratar_unary(node.operand)
+        if isinstance(node.operand, ast.Call):   
+            self.tratar_call_compare(node.operand) 
+        # print(f'op: {node.op} operand: {node.operand}')
         
     def modules(self):
         return self.modules

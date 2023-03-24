@@ -5,11 +5,11 @@ from unittest import skipIf
 import pytest
 
 # treat
-if platform.system() == 'Linux':
-    pass
-# if sys.platform.startswith('win'):
+# if platform.system() == 'Linux':
 #     pass
 # if not os.name != 'nt':
+#     pass
+# if sys.platform.startswith('win'):
 #     pass
 
 # @pytest.mark.skipif(os.name != "nt", reason="Test only on Windows")
