@@ -1,4 +1,6 @@
 import ast
+import shutil
+import chardet    
 from get_repo import Repo
 from monitor import all_files
 from writercsv import WriterCSV
@@ -8,8 +10,8 @@ import csv
 def dev():
 
     dir = "data1/sanic"
-    name = 'sanic/sanic'
-    commit_hash = "6e1c787e5d92edffc59432d772209e49dccf7969"
+    name = 'delgan/loguru'
+    commit_hash = "c926fd069dc9eadb04e48ca9692387b5e7372677"
     
     # dir = "data1/ansible2"
     # name = 'ansible/ansible'
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     packages_all = []
     razions_all = []
     projects_metadata = []
-    with open(csv_filename, 'r') as file:
+    with open(csv_filename, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         for row in reader:
             if not has_head_readed: #skip head
@@ -80,9 +82,8 @@ if __name__ == '__main__':
                 filename = str(python_file).replace(project_dir,"")
                 if not 'test' in filename: continue #only test files
                 # fill data
-
                 try:
-                    parser = ast.parse(open(python_file).read())
+                    parser = ast.parse(open(python_file, 'rb').read())
                     monitor = CallVisitor(libs_os, 
                                           project_name,
                                           project_hash,
@@ -91,7 +92,6 @@ if __name__ == '__main__':
                     monitor.visit(parser)
                     #all tests
                     count_tests_files = count_tests_files + 1
-                    
                     #only files declare libs_os
                     if not monitor.modules:  continue 
                     if not set(libs_os.keys()).intersection(monitor.modules): continue
@@ -103,7 +103,7 @@ if __name__ == '__main__':
                         for row in monitor.razions:
                             row_temp = []    
                             for v in heads_decorator:
-                                # print(f"arquivo:{filename} {row['line']} -> {row['module']}.{row['platform']} ")
+                                # print(f"arquivo:{filename} {row['line']} -> {row['module']}, v: {row} ")
                                 row_temp.extend([row[v]])
                                 if v == "func_def" and str(row[v]).strip() == "": 
                                     count_class_decorator = count_class_decorator + 1
@@ -135,21 +135,28 @@ if __name__ == '__main__':
             ])
             
             writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path="analysis/experiment")
+            # writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path="data1")
             writer.write(head=heads_compare, rows=packages)
             
             writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path="analysis/experiment")
+            # writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path="data1")
             writer.write(head=heads_decorator, rows=razions) 
           
             packages_all.extend(packages)
             razions_all.extend(razions) 
+            shutil.rmtree(project_dir)
+            # print(project_dir)
             print(f'finish: {project_name}')                 
         
     writer = WriterCSV(name=f'experiment_all_compare', path="analysis")
+    # writer = WriterCSV(name=f'experiment_all_compare', path="data1")
     writer.write(head=heads_compare, rows=packages_all)
 
     writer = WriterCSV(name=f'experiment_all_razions', path="analysis")
+    # writer = WriterCSV(name=f'experiment_all_razions', path="data1")
     writer.write(head=heads_decorator, rows=razions_all)
     
-    writer = WriterCSV(name=f'experiment_all_metadata', path="analysis")
+    # writer = WriterCSV(name=f'experiment_all_metadata', path="analysis")
+    writer = WriterCSV(name=f'experiment_all_metadata', path="data1")
     writer.write(head=heads_project_metadata, rows=projects_metadata)
     

@@ -27,6 +27,7 @@ class CallVisitor(ast.NodeVisitor):
         self.classe = ""
         self.atts = []
         self.platform = ''
+        self.compare_temp = []
         
     def visit_Import(self, node):
         for name in node.names:
@@ -111,7 +112,11 @@ class CallVisitor(ast.NodeVisitor):
                 self.debug(f'comparators compare: {comparator.value}')
                 self.razion['platform'] = comparator.value
                 self.platform = comparator.value
-    
+            if isinstance(comparator, ast.Tuple):
+                self.compare_temp = comparator.elts
+            if isinstance(comparator, ast.List):
+                self.compare_temp = comparator.elts
+                # pass    
     # Call(expr func, expr* args, keyword* keywords)
     def parse_call(self, node):
         self.debug(f'[c] {node.func}')    
@@ -161,10 +166,19 @@ class CallVisitor(ast.NodeVisitor):
                     self.razion['project_name'] = self.project_name
                     self.razion['project_hash'] = self.project_hash
                     
-                    self.razions.append(self.razion)
+                    if(len(self.compare_temp)>0): # sys.platform not in ("linux", "darwin")
+                        for plat in self.compare_temp:
+                            temp = self.razion.copy()
+                            temp['platform'] = plat.value
+                            self.razions.append(temp)
+                        self.compare_temp = []
+                    else:
+                        self.razions.append(self.razion)        
                     
             self.razion = dict()
+            self.compare_temp = []
             self.debug(f'')
+            
 
     def tratar_modulos(self, node, module, package):
         key = node.name
@@ -174,7 +188,16 @@ class CallVisitor(ast.NodeVisitor):
         self.chamadas[key] = [module, package] # package_name -> [package, module]
         self.debug(f'module:{module}, package: {package}, name: {key}, cham: {self.chamadas}')   
     
-        
+    def tratar_call_plaftorm(self, call):
+        if isinstance(call, ast.Call):
+            for arg in call.args:    
+                if isinstance(arg, ast.Constant):
+                    self.platform = arg.value
+                if isinstance(arg, ast.Tuple):
+                    self.compare_temp = arg.elts
+                if isinstance(arg, ast.List):
+                    self.compare_temp = arg.elts
+        pass    
     def tratar_Name(self, node, parent):
         if isinstance(node, ast.Name):
             if node.id and node.id in self.chamadas:
@@ -187,24 +210,53 @@ class CallVisitor(ast.NodeVisitor):
                             for comparator in self.p.comparators:    
                                 if isinstance(comparator, ast.Constant):
                                     self.platform = comparator.value
+                                if isinstance(comparator, ast.Tuple):
+                                    self.compare_temp = comparator.elts
+                                if isinstance(comparator, ast.List):
+                                    self.compare_temp = comparator.elts    
                         if isinstance(self.p, ast.If):
                             if isinstance(self.p.test, ast.Call):
-                                for arg in self.p.test.args:    
-                                    if isinstance(arg, ast.Constant):
-                                        self.platform = arg.value
-                                              
+                                self.tratar_call_plaftorm(self.p.test)
+                                # for arg in self.p.test.args:    
+                                #     if isinstance(arg, ast.Constant):
+                                #         self.platform = arg.value
+                                #     if isinstance(arg, ast.Tuple):
+                                #         self.compare_temp = arg.elts
+                                #     if isinstance(arg, ast.List):
+                                #         self.compare_temp = arg.elts    
+                            if isinstance(self.p.test, ast.UnaryOp):
+                                self.tratar_call_plaftorm(self.p.test.operand)
+                                                  
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
+                        self.debug(f'- compare_temp: {self.compare_temp}')
                         if not parent in self.atts:
                             url = self.gerar_url(node.lineno)
                             method_type = self.gerar_tipo_metodo()
-                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                            
+                            if(len(self.compare_temp)>0): # sys.platform not in ("linux", "darwin")
+                                for plat in self.compare_temp:
+                                    self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                                                    parent.attr, plat.value, self.filename,self.funcao, 
+                                                    method_type, url])
+                                    # temp = self.razion.copy()
+                                    # temp['platform'] = plat.value
+                                    # self.razions.append(temp)
+                                self.compare_temp = []
+                            else:
+                                self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
                                                     parent.attr, self.platform, self.filename,self.funcao, 
                                                     method_type, url])
+                                
+                            
+                            # self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                            #                         parent.attr, self.platform, self.filename,self.funcao, 
+                            #                         method_type, url])
                             
                           
                             self.p = None
                             self.platform = ''
+                            self.compare_temp = []
     def gerar_url(self, line):
           # https://github.com/ansible/ansible/blob/4ea50cef23c3dc941b2e8dc507f37a962af6e2c8
           # /test/support/integration/plugins/modules/timezone.py#L107
@@ -233,8 +285,8 @@ if __name__ == '__main__':
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     pacotes = []
-    project_dir = "data1/ansible2"
-    project_name = "ansible/ansible"
+    project_dir = "data1/salt"
+    project_name = "saltstack/salt"
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 
     for python_file in all_files(project_dir):
@@ -242,16 +294,20 @@ if __name__ == '__main__':
         filename = str(python_file).replace(project_dir,"")
         try:
             parser = ast.parse(open(python_file).read())
-            monitor = CallVisitor(libs_os, project_name,"b63812bc08fd00fd772c28a2604f77f487d23104", filename,decorators)
+            monitor = CallVisitor(libs_os, project_name,"0b73c8008577eddba7ea8549e6f4fdc4ccba436d", filename,decorators)
             monitor.visit(parser)
 
             if len(monitor.package_os) > 0:
                 pacotes.extend(monitor.package_os)
                 print(10*'---', f'LISTANDO os packs: {filename}')
                 for row in monitor.package_os:
-                    # print(f'{row[2]} -> {row[3]}.{row[4]}')
-                    print(row)
-        
+                    print(f'{row[2]} -> {row[3]}.{row[4]}-{row[5]}')
+                #     print(row)
+            # if len(monitor.razions) > 0:
+            #     print(10*'---', f'LISTANDO os razions: {filename}')
+            #     for row in monitor.razions:
+            #         print(f'{row["line"]}->{row["module"]}.{row["package"]} - {row["platform"]} {row["razion"]}')
+                    # print(row)
         except SyntaxError as ex:
             print('erro', python_file) 
     # heads = ['linhas', 'module', 'package', 'file', 'function']

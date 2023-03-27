@@ -85,8 +85,6 @@ horovod/horovod
 google/yapf
 gunthercox/chatterbot
 psf/requests-html
-karpathy/mingpt
-lucidrains/vit-pytorch
 lra/mackup
 plotly/plotly.py
 tensorflow/tensor2tensor
@@ -100,3 +98,4 @@ davidsandberg/facenet
 mlflow/mlflow
 codelucas/newspaper
 wagtail/wagtail
+textualize/textual

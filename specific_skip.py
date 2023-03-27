@@ -271,12 +271,16 @@ class CallVisitor(ast.NodeVisitor):
                             if isinstance(self.p.test, ast.UnaryOp):
                                 self.debug(f'tratando uanyOp')
                                 self.tratar_unary(self.p.test)
+<<<<<<< HEAD
+                        self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, p: {self.p} plat: {self.platform}")
+=======
                             
                             # self.debug(f'callll ->> {self.p.test}')    
                             # if isinstance(self.p.test, ast.Call):
                                 
                                 
                         self.debug(f"  linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}, op: {self.operator} plat: {self.platform}")
+>>>>>>> 066c95a6051cbbea03b5f75b1199f9733e9e6280
                         self.debug(f'atributo: {parent} -> {parent in self.atts}')
                         if not parent in self.atts:
                             self.package_os.append([
