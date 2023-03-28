@@ -36,9 +36,10 @@ def clone(repo_name):
     return repo.name, commit_hash, local.path()
 
 if __name__ == '__main__':
-    # csv_filename = 'input-csv/projects_filted_dev.csv'
-    csv_filename = 'input-csv/projects_filted_local.csv'
-    # csv_filename = 'input-csv/projects_filted.csv'
+    
+    experiment_dir = "analysis/round3"
+    experiment_filename = 'input-csv/projects_filted_dev.csv'
+    # experiment_filename = 'input-csv/projects_filted_local.csv'
     has_head_readed = False
     
     libs_os =  dict()
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     packages_all = []
     razions_all = []
     projects_metadata = []
-    with open(csv_filename, 'r', encoding='utf-8') as file:
+    with open(experiment_filename, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         for row in reader:
             if not has_head_readed: #skip head
@@ -134,11 +135,11 @@ if __name__ == '__main__':
                 count_class_decorator, count_method_decorator
             ])
             
-            writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path="analysis/experiment")
+            writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path=f"{experiment_dir}/experiment")
             # writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path="data1")
             writer.write(head=heads_compare, rows=packages)
             
-            writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path="analysis/experiment")
+            writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path=f"{experiment_dir}/experiment")
             # writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path="data1")
             writer.write(head=heads_decorator, rows=razions) 
           
@@ -148,15 +149,15 @@ if __name__ == '__main__':
             # print(project_dir)
             print(f'finish: {project_name}')                 
         
-    writer = WriterCSV(name=f'experiment_all_compare', path="analysis")
+    writer = WriterCSV(name=f'experiment_all_compare', path=experiment_dir)
     # writer = WriterCSV(name=f'experiment_all_compare', path="data1")
     writer.write(head=heads_compare, rows=packages_all)
 
-    writer = WriterCSV(name=f'experiment_all_razions', path="analysis")
+    writer = WriterCSV(name=f'experiment_all_razions', path=experiment_dir)
     # writer = WriterCSV(name=f'experiment_all_razions', path="data1")
     writer.write(head=heads_decorator, rows=razions_all)
     
     # writer = WriterCSV(name=f'experiment_all_metadata', path="analysis")
-    writer = WriterCSV(name=f'experiment_all_metadata', path="data1")
+    writer = WriterCSV(name=f'experiment_all_metadata', path=experiment_dir)
     writer.write(head=heads_project_metadata, rows=projects_metadata)
     

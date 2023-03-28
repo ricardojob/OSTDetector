@@ -90,10 +90,17 @@ class CallVisitor(ast.NodeVisitor):
     
     # Attribute(expr value, identifier attr, expr_context ctx)
     def parse_attr(self, attribute):
+        self.debug(f'[parse_attr] {attribute} e chamadas: {self.chamadas}')
+        # if isinstance(attribute, ast.Name):
+        #     self.razion['module'] = attribute.id
+        #     self.razion['line'] = attribute.lineno
+        #     self.razion['url'] = self.gerar_url(attribute.lineno)
+        #     return
+        
         if isinstance(attribute.value, ast.Attribute):
             self.parse_attr(attribute.value)
         if isinstance(attribute.value, ast.Name):
-            self.razion['module'] = attribute.value.id
+            self.razion['module'] = self.chamadas[attribute.value.id][0]            
             self.razion['line'] = attribute.lineno
             self.razion['url'] = self.gerar_url(attribute.lineno)
             
@@ -106,10 +113,10 @@ class CallVisitor(ast.NodeVisitor):
         self.debug(f'[compare] {compare.comparators}, left: {compare.left}')
         if isinstance(compare.left, ast.Attribute):
             self.parse_attr(compare.left)
-
-        for comparator in compare.comparators:    
+        
+        for comparator in compare.comparators:  
+            self.debug(f'compare.comparators type: {comparator}')
             if isinstance(comparator, ast.Constant):
-                self.debug(f'comparators compare: {comparator.value}')
                 self.razion['platform'] = comparator.value
                 self.platform = comparator.value
             if isinstance(comparator, ast.Tuple):
@@ -119,11 +126,16 @@ class CallVisitor(ast.NodeVisitor):
                 # pass    
     # Call(expr func, expr* args, keyword* keywords)
     def parse_call(self, node):
-        self.debug(f'[c] {node.func}')    
+        # self.debug(f'[c] {node.func} {node.func.id}')    
         # self.debug(f'[c] - {node.func.value.value.id} , {node.keywords}, {node.lineno}')
         if isinstance(node.func, ast.Attribute):
             self.parse_attr(node.func)
-        for arg in node.args:    
+        # if isinstance(node.func, ast.Name):
+        #     self.parse_attr(node.func)
+        for arg in node.args:   
+            # self.debug(f'[parse_call_arg] {node.func.id} {arg}')    
+            if isinstance(arg, ast.Call):
+                self.parse_call(arg)
             if isinstance(arg, ast.Constant):
                 self.razion['platform'] = arg.value
                 self.platform = arg.value
@@ -141,6 +153,7 @@ class CallVisitor(ast.NodeVisitor):
             self.razion = dict()
             self.razion['decorator'] = decoratorAtt
             for a in d.keywords:
+                self.debug(f'[key] {a.value}')
                 if isinstance(a.value, ast.Constant):
                     self.debug(f'[k] line: {a.value.lineno}, val: {a.value.value}, arg: {a.arg}')
                     if 'reason' == a.arg:
@@ -148,12 +161,18 @@ class CallVisitor(ast.NodeVisitor):
                         self.razion['line'] = a.value.lineno
                         self.razion['url'] = self.gerar_url(a.value.lineno)
             for arg in d.args:
+                self.debug(f'[arg] {d.func} {arg}')
                 if isinstance(arg, ast.Call):
                     self.parse_call(arg)
                 if isinstance(arg, ast.Compare):
                     self.parse_compare(arg)
                 if isinstance(arg, ast.Constant): # when not definier a reason at annotation
                     self.razion['razion'] = arg.value
+                if isinstance(arg, ast.UnaryOp):
+                    if isinstance(arg.operand, ast.Call):
+                        self.parse_call(arg.operand)    
+                    # if isinstance(arg.operand, ast.Call):
+                    #     self.parse_call(arg.operand)
             self.debug(f'[r] razion: {self.razion}')
             self.razion ['func_def'] = self.funcao
             self.razion ['class_def'] = self.classe
@@ -189,6 +208,7 @@ class CallVisitor(ast.NodeVisitor):
         self.debug(f'module:{module}, package: {package}, name: {key}, cham: {self.chamadas}')   
     
     def tratar_call_plaftorm(self, call):
+        
         if isinstance(call, ast.Call):
             for arg in call.args:    
                 if isinstance(arg, ast.Constant):
@@ -197,7 +217,7 @@ class CallVisitor(ast.NodeVisitor):
                     self.compare_temp = arg.elts
                 if isinstance(arg, ast.List):
                     self.compare_temp = arg.elts
-        pass    
+            
     def tratar_Name(self, node, parent):
         if isinstance(node, ast.Name):
             if node.id and node.id in self.chamadas:
@@ -208,6 +228,9 @@ class CallVisitor(ast.NodeVisitor):
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
                         if isinstance(self.p, ast.Compare):
                             for comparator in self.p.comparators:    
+                                self.debug(f'comparators compare: {comparator} -- tratar_Name')
+                                if isinstance(comparator, ast.Call):
+                                    self.tratar_call_plaftorm(comparator)
                                 if isinstance(comparator, ast.Constant):
                                     self.platform = comparator.value
                                 if isinstance(comparator, ast.Tuple):
@@ -285,7 +308,7 @@ if __name__ == '__main__':
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     pacotes = []
-    project_dir = "data1/salt"
+    project_dir = "input"
     project_name = "saltstack/salt"
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 
@@ -303,10 +326,10 @@ if __name__ == '__main__':
                 for row in monitor.package_os:
                     print(f'{row[2]} -> {row[3]}.{row[4]}-{row[5]}')
                 #     print(row)
-            # if len(monitor.razions) > 0:
-            #     print(10*'---', f'LISTANDO os razions: {filename}')
-            #     for row in monitor.razions:
-            #         print(f'{row["line"]}->{row["module"]}.{row["package"]} - {row["platform"]} {row["razion"]}')
+            if len(monitor.razions) > 0:
+                print(10*'---', f'LISTANDO os razions: {filename}')
+                for row in monitor.razions:
+                    print(f'{row["line"]}->{row["module"]}.{row["package"]} - {row["platform"]} {row["razion"]}')
                     # print(row)
         except SyntaxError as ex:
             print('erro', python_file) 

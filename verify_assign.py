@@ -11,13 +11,13 @@ class AssignVisitor(ast.NodeVisitor):
         self.project_hash = project_hash
         self.filename = file
         self.libs_os = libs
-        self.chaves = dict()
-        self.funcao = ""
+        # self.chaves = dict()
+        # self.funcao = ""
         self.modules = set()
         # self.libs_os.update(libs)
         self.chamadas = dict()
-        self.package_os = []
-        self.p=None
+        # self.package_os = []
+        # self.p=None
         
     def tratar_modulos(self, node, module, package):
         key = node.name
@@ -44,71 +44,22 @@ class AssignVisitor(ast.NodeVisitor):
             self.modules.add(module)
         self.generic_visit(node) 
 
-    def visit_FunctionDef(self, node):
-        self.funcao = node.name
-        self.generic_visit(node)
-                    
-    def visit_AsyncFunctionDef(self, node):
-        self.funcao = node.name
-        self.generic_visit(node)
-
-    def visit_ClassDef(self, node):
-        self.funcao = ''
-        self.generic_visit(node)
-   
-    def visit_Compare(self, node):
-        self.p = node
-        # print(f'({node.lineno}) {self.filename} - compare')
-        self.generic_visit(node)
-        self.p = None
-    
-    def visit_If(self, node):
-        self.p = node
-        self.generic_visit(node)
-        self.p = None
-    
-    def verifica_attibute(self, node):
-        if isinstance(node, ast.Attribute): 
-            # self.p = node 
-            # print(f"linha: {node.lineno}, dict: {self.p}, call: {node}")
-            if any(node.attr in item for item in self.libs_os.values()): 
-                if isinstance(node.value, ast.Name) and node.value.id in self.libs_os: 
-                    # print(f"linha: {node.lineno}, dict: {self.p}, node: {node.attr}, call: {node.value.id}")
-                    self.p = node
-            if isinstance(node.value, ast.Attribute):
-                self.verifica_attibute(node.value)
-        # print(f'system in libs_os: {}')
-
-    def visit_Call(self, node):
-        self.p = node
-        if isinstance(node.func, ast.Attribute): 
-            self.verifica_attibute(node.func)
-        self.generic_visit(node)
-
-    def tratar_Name(self, node, parent):
-        if isinstance(node, ast.Name):
-            if node.id and node.id in self.chamadas:
-                mod = self.chamadas[node.id]
-                if mod[0] in self.libs_os:
-                    if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
-                        print(f" linha: {node.lineno}, module: {mod[0]}, call: {parent.attr} -- Name, classe:{self.filename}, func:{self.funcao}")
-                        self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], parent.attr,self.filename,self.funcao])
-                        self.p = None
-    
     def name(self, parent, line, ctx):
+        # print(f'name {parent} ctx: {ctx}')
         if isinstance(parent.value, ast.Name):
                 package = parent.value
                 if package.id and package.id in self.chamadas: 
                     module_temp = self.chamadas[package.id]
                     if module_temp[0] in self.libs_os and any(parent.attr in item for item in self.libs_os.values()): 
                         print(f'({line}) {parent.value.id}.{parent.attr} key: {package.id} ({ctx}) file: {self.filename}')
-                    elif package.id in self.libs_os:
-                        self.chamadas[package.id] = [package.id, parent.attr] # package_name -> [package, module]
+                    # elif package.id in self.libs_os:
+                    #     self.chamadas[package.id] = [package.id, parent.attr] # package_name -> [package, module]
         
                         # print(f'chamadas:{self.chamadas}')
     
     def visit_Assign(self, node):
-        # print(f'{self.filename}({self.funcao}) - {node.value}')
+        # print(f'[{node.lineno}]{self.filename} ({self.funcao}) - {node.value}')
+        # print(f'[{node.lineno}]{self.filename} - {node.value}')
         parent = node.value
         self.p = node
         if isinstance(parent, ast.Attribute):
@@ -123,13 +74,45 @@ class AssignVisitor(ast.NodeVisitor):
                     self.name(call.func, node.lineno, "sub-call")
             if isinstance(call, ast.Attribute):
                 self.name(call, node.lineno, "sub-att")
+        elif isinstance(parent, ast.Compare):
+            if isinstance(parent.left, ast.Attribute):
+                self.name(parent.left, node.lineno, "compare-att")
+            if isinstance(parent, ast.Name):
+                self.name(node, node.lineno, "compare-name")
+        elif isinstance(parent, ast.IfExp):
+            # print(parent.test.id, self.chamadas)
+            if isinstance(parent.test, ast.Call):
+                if isinstance(parent.test.func, ast.Attribute):
+                    self.name(parent.test.func, node.lineno, "if-call")
+            if isinstance(parent.test, ast.Name):
+                self.name(node, node.lineno, "ifexp-name")
+        elif isinstance(parent, ast.Tuple) or isinstance(parent, ast.List):
+            for value in parent.elts:
+                # print('value: ', value)
+                if isinstance(value, ast.UnaryOp):
+                    value = value.operand
+                if isinstance(value, ast.Call):
+                    if isinstance(value.func, ast.Attribute):
+                        self.name(value.func, node.lineno, "tuple-call")
+                    for arg in value.args:    
+                        if isinstance(arg, ast.Attribute):
+                            self.name(arg, node.lineno, "tuple-call-arg")
+                    # if isinstance(value.func, ast.Name):
+                    #     print('name ', value.func.id)
+                        # self.name(value, node.lineno, "tuple-call-name")
+                if isinstance(value, ast.Attribute):
+                    self.name(value, node.lineno, "tuple-att")
+                if isinstance(value, ast.Name):
+                    self.name(node, node.lineno, "tuple-name")
+                
+                    
         elif isinstance(parent, ast.Name):
             self.name(node, node.lineno, "name")
        
         self.generic_visit(node) 
         
-    def modules(self):
-        return self.modules
+    # def modules(self):
+    #     return self.modules
     
 if __name__ == '__main__':
     # python_file = "data/django/django/tests/asgi/tests.py"
@@ -166,7 +149,7 @@ if __name__ == '__main__':
     # project_dir = "data1/flask2"
     # project_dir = "data/requests/tests"
     # project_dir = "data1/ansible2/test"
-    project_dir = "data1/ansible"
+    project_dir = "input"
     project_name = "ansible"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
@@ -199,11 +182,11 @@ if __name__ == '__main__':
                     pass
             # file_list.append(str(filename))
             # monitor.print_chamadas()
-            if len(monitor.package_os) > 0:
-                pacotes.extend(monitor.package_os)
-                # print(10*'---', f'LISTANDO os packs: {filename}')
-                # for row in monitor.package_os:
-                #     # print(f'{row[2]} -> {row[3]}.{row[4]}')
+            # if len(monitor.package_os) > 0:
+            #     pacotes.extend(monitor.package_os)
+            #     print(10*'---', f'LISTANDO os packs: {filename}')
+            #     for row in monitor.package_os:
+            #         print(f'{row[2]} -> {row[3]}.{row[4]}')
                 #     print(row)
                             
         
