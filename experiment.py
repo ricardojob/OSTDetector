@@ -5,7 +5,10 @@ from get_repo import Repo
 from monitor import all_files
 from writercsv import WriterCSV
 from specific import CallVisitor
+from verify_assign import AssignVisitor
+
 import csv
+
 
 def dev():
 
@@ -38,8 +41,8 @@ def clone(repo_name):
 if __name__ == '__main__':
     
     experiment_dir = "analysis/round3"
-    experiment_filename = 'input-csv/projects_filted_dev.csv'
-    # experiment_filename = 'input-csv/projects_filted_local.csv'
+    # experiment_filename = 'input-csv/projects_filted_dev.csv'
+    experiment_filename = 'input-csv/projects_filted_local.csv'
     has_head_readed = False
     
     libs_os =  dict()
@@ -52,9 +55,13 @@ if __name__ == '__main__':
     heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function', 'method_type','url']
     heads_project_metadata = ['project_name','project_hash', 'libos_use', 'tests_files', 'tests_files_libos_use', 'tests_files_libos_use_and_call',
                               'count_calls_libos_in_code', 'count_calls_libos_in_decorator', 'count_class_decorator', 'count_method_decorator']
+    heads_assigns = ['#', 'project_name','project_hash', 'line', 'module', 'package', 'filename', 'url']
+
     packages_all = []
     razions_all = []
     projects_metadata = []
+    assigns = []
+
     with open(experiment_filename, 'r', encoding='utf-8') as file:
         reader = csv.reader(file)
         for row in reader:
@@ -91,6 +98,12 @@ if __name__ == '__main__':
                                           filename,
                                           decorators)                    
                     monitor.visit(parser)
+                    
+                    verify = AssignVisitor(libs_os, 
+                                          project_name,
+                                          project_hash,
+                                          filename)
+                    verify.visit(parser)
                     #all tests
                     count_tests_files = count_tests_files + 1
                     #only files declare libs_os
@@ -111,6 +124,9 @@ if __name__ == '__main__':
                                     
                             razions.append(row_temp)
                     
+                    if len(verify.assigns) > 0:
+                        assigns.extend(verify.assigns)
+                        
                     project_libos_use = 1 #project uses libos
                     count_tests_files_libos_use = count_tests_files_libos_use + 1 #only tests use libos
                     count_calls_libos_in_code = count_calls_libos_in_code + len(monitor.package_os) 
@@ -160,4 +176,8 @@ if __name__ == '__main__':
     # writer = WriterCSV(name=f'experiment_all_metadata', path="analysis")
     writer = WriterCSV(name=f'experiment_all_metadata', path=experiment_dir)
     writer.write(head=heads_project_metadata, rows=projects_metadata)
+    
+     # writer = WriterCSV(name=f'experiment_all_metadata', path="analysis")
+    writer = WriterCSV(name=f'experiment_all_assigns', path=experiment_dir)
+    writer.write(head=heads_assigns, rows=assigns)
     

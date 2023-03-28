@@ -16,7 +16,7 @@ class AssignVisitor(ast.NodeVisitor):
         self.modules = set()
         # self.libs_os.update(libs)
         self.chamadas = dict()
-        # self.package_os = []
+        self.assigns = []
         # self.p=None
         
     def tratar_modulos(self, node, module, package):
@@ -44,6 +44,11 @@ class AssignVisitor(ast.NodeVisitor):
             self.modules.add(module)
         self.generic_visit(node) 
 
+    def gerar_url(self, line):
+          # https://github.com/ansible/ansible/blob/4ea50cef23c3dc941b2e8dc507f37a962af6e2c8
+          # /test/support/integration/plugins/modules/timezone.py#L107
+          return f'https://github.com/{self.project_name}/blob/{self.project_hash}{self.filename}#L{line}' 
+       
     def name(self, parent, line, ctx):
         # print(f'name {parent} ctx: {ctx}')
         if isinstance(parent.value, ast.Name):
@@ -51,7 +56,16 @@ class AssignVisitor(ast.NodeVisitor):
                 if package.id and package.id in self.chamadas: 
                     module_temp = self.chamadas[package.id]
                     if module_temp[0] in self.libs_os and any(parent.attr in item for item in self.libs_os.values()): 
-                        print(f'({line}) {parent.value.id}.{parent.attr} key: {package.id} ({ctx}) file: {self.filename}')
+                        # print(f'({line}) {parent.value.id}.{parent.attr} key: {package.id} ({ctx}) file: {self.filename}')
+                        url = self.gerar_url(line)
+                        self.assigns.append(
+                            [
+                                self.project_name, self.project_hash, line, 
+                                module_temp[0], parent.attr, 
+                                self.filename, url
+                            ]
+                        )
+                                    # temp = self.razion.copy()
                     # elif package.id in self.libs_os:
                     #     self.chamadas[package.id] = [package.id, parent.attr] # package_name -> [package, module]
         
