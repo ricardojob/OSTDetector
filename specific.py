@@ -100,7 +100,10 @@ class CallVisitor(ast.NodeVisitor):
         if isinstance(attribute.value, ast.Attribute):
             self.parse_attr(attribute.value)
         if isinstance(attribute.value, ast.Name):
-            self.razion['module'] = self.chamadas[attribute.value.id][0]            
+            if attribute.value.id in self.chamadas:
+                self.razion['module'] = self.chamadas[attribute.value.id][0]
+            else:                 
+                self.razion['module'] = attribute.value.id
             self.razion['line'] = attribute.lineno
             self.razion['url'] = self.gerar_url(attribute.lineno)
             
@@ -308,8 +311,8 @@ if __name__ == '__main__':
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     pacotes = []
-    project_dir = "input"
-    project_name = "saltstack/salt"
+    project_dir = "data/quantopian"
+    project_name = "quantopian/zipline"
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
 
     for python_file in all_files(project_dir):

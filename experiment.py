@@ -55,7 +55,7 @@ if __name__ == '__main__':
     heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function', 'method_type','url']
     heads_project_metadata = ['project_name','project_hash', 'libos_use', 'tests_files', 'tests_files_libos_use', 'tests_files_libos_use_and_call',
                               'count_calls_libos_in_code', 'count_calls_libos_in_decorator', 'count_class_decorator', 'count_method_decorator']
-    heads_assigns = ['#', 'project_name','project_hash', 'line', 'module', 'package', 'filename', 'url']
+    heads_assigns = ['project_name','project_hash', 'line', 'module', 'package', 'filename', 'url']
 
     packages_all = []
     razions_all = []

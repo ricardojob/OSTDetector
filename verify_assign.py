@@ -91,15 +91,15 @@ class AssignVisitor(ast.NodeVisitor):
         elif isinstance(parent, ast.Compare):
             if isinstance(parent.left, ast.Attribute):
                 self.name(parent.left, node.lineno, "compare-att")
-            if isinstance(parent, ast.Name):
-                self.name(node, node.lineno, "compare-name")
+            # if isinstance(parent, ast.Name):
+            #     self.name(node, node.lineno, "compare-name")
         elif isinstance(parent, ast.IfExp):
             # print(parent.test.id, self.chamadas)
             if isinstance(parent.test, ast.Call):
                 if isinstance(parent.test.func, ast.Attribute):
                     self.name(parent.test.func, node.lineno, "if-call")
-            if isinstance(parent.test, ast.Name):
-                self.name(node, node.lineno, "ifexp-name")
+            # if isinstance(parent.test, ast.Name):
+            #     self.name(node, node.lineno, "ifexp-name")
         elif isinstance(parent, ast.Tuple) or isinstance(parent, ast.List):
             for value in parent.elts:
                 # print('value: ', value)
@@ -113,15 +113,15 @@ class AssignVisitor(ast.NodeVisitor):
                             self.name(arg, node.lineno, "tuple-call-arg")
                     # if isinstance(value.func, ast.Name):
                     #     print('name ', value.func.id)
-                        # self.name(value, node.lineno, "tuple-call-name")
+                    #     self.name(value, node.lineno, "tuple-call-name")
                 if isinstance(value, ast.Attribute):
                     self.name(value, node.lineno, "tuple-att")
-                if isinstance(value, ast.Name):
-                    self.name(node, node.lineno, "tuple-name")
+                # if isinstance(value, ast.Name):
+                #     self.name(node, node.lineno, "tuple-name")
                 
                     
-        elif isinstance(parent, ast.Name):
-            self.name(node, node.lineno, "name")
+        # elif isinstance(parent, ast.Name):
+        #     self.name(node, node.lineno, "name")
        
         self.generic_visit(node) 
         
@@ -161,16 +161,16 @@ if __name__ == '__main__':
     # project_dir = "input"
     # project_dir = "data1/django"
     # project_dir = "data1/flask2"
-    # project_dir = "data/requests/tests"
+    project_dir = "data/quantopian"
     # project_dir = "data1/ansible2/test"
-    project_dir = "input"
+    # project_dir = "input"
     project_name = "ansible"
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         filename = str(python_file).replace(project_dir,"")
         if not 'test' in filename: continue #only test files
 
-        # print(python_file)
+        print(python_file)
         # """
         try:
             # if 'test' in str(python_file): # verify file with test -> 'file_with_tests'
