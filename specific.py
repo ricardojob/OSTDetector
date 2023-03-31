@@ -189,13 +189,15 @@ class CallVisitor(ast.NodeVisitor):
                     self.razion['project_hash'] = self.project_hash
                     
                     if(len(self.compare_temp)>0): # sys.platform not in ("linux", "darwin")
-                        for plat in self.compare_temp:
-                            temp = self.razion.copy()
-                            temp['platform'] = plat.value
-                            self.razions.append(temp)
-                        self.compare_temp = []
-                    else:
-                        self.razions.append(self.razion)        
+                        # plat = ', '.join(str(c.value) for c in self.compare_temp)
+                        self.razion['platform'] = ', '.join(str(c.value) for c in self.compare_temp)
+                        # for plat in self.compare_temp:
+                            # temp = self.razion.copy()
+                            # temp['platform'] = plat.value
+                            # self.razions.append(temp)
+                    #     self.compare_temp = []
+                    # else:
+                    self.razions.append(self.razion)        
                     
             self.razion = dict()
             self.compare_temp = []
@@ -261,16 +263,17 @@ class CallVisitor(ast.NodeVisitor):
                             method_type = self.gerar_tipo_metodo()
                             
                             if(len(self.compare_temp)>0): # sys.platform not in ("linux", "darwin")
-                                for plat in self.compare_temp:
-                                    self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
-                                                    parent.attr, plat.value, self.filename,self.funcao, 
-                                                    method_type, url])
+                                self.platform = ', '.join(str(c.value) for c in self.compare_temp)
+                                # for plat in self.compare_temp:
+                                # self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                                #                     parent.attr, plat, self.filename,self.funcao, 
+                                                    # method_type, url])
                                     # temp = self.razion.copy()
                                     # temp['platform'] = plat.value
                                     # self.razions.append(temp)
-                                self.compare_temp = []
-                            else:
-                                self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
+                            #     self.compare_temp = []
+                            # else:
+                            self.package_os.append([self.project_name, self.project_hash, node.lineno, mod[0], 
                                                     parent.attr, self.platform, self.filename,self.funcao, 
                                                     method_type, url])
                                 
@@ -311,13 +314,15 @@ if __name__ == '__main__':
     libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
     libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
     pacotes = []
-    project_dir = "data/quantopian"
-    project_name = "quantopian/zipline"
+    project_dir = "data1/sanic"
+    project_name = "sanic/sanic"
     decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
-
+    packs = 0
+    raz = 0
     for python_file in all_files(project_dir):
         if python_file.is_dir(): continue
         filename = str(python_file).replace(project_dir,"")
+        if not 'test' in filename: continue #only test files
         try:
             parser = ast.parse(open(python_file).read())
             monitor = CallVisitor(libs_os, project_name,"0b73c8008577eddba7ea8549e6f4fdc4ccba436d", filename,decorators)
@@ -325,17 +330,21 @@ if __name__ == '__main__':
 
             if len(monitor.package_os) > 0:
                 pacotes.extend(monitor.package_os)
-                print(10*'---', f'LISTANDO os packs: {filename}')
-                for row in monitor.package_os:
-                    print(f'{row[2]} -> {row[3]}.{row[4]}-{row[5]}')
+                # print(10*'---', f'LISTANDO os packs: {filename}')
+                # for row in monitor.package_os:
+                #     print(f'{row[2]} -> {row[3]}.{row[4]}-{row[5]}')
                 #     print(row)
             if len(monitor.razions) > 0:
-                print(10*'---', f'LISTANDO os razions: {filename}')
+                # print(10*'---', f'LISTANDO os razions: {filename}')
                 for row in monitor.razions:
                     print(f'{row["line"]}->{row["module"]}.{row["package"]} - {row["platform"]} {row["razion"]}')
                     # print(row)
+            packs = packs + len(monitor.package_os)
+            raz = raz + len(monitor.razions)
         except SyntaxError as ex:
             print('erro', python_file) 
+    print(f' packs: {packs} razions: {raz}')
+
     # heads = ['linhas', 'module', 'package', 'file', 'function']
     # writer = WriterCSV(name=f'packages_os_{project_name.replace("/","_")}', path="analysis")
     # writer.write(head=heads, rows=pacotes) 
