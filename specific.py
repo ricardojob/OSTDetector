@@ -77,6 +77,7 @@ class CallVisitor(ast.NodeVisitor):
     def visit_Attribute(self, node):
         att = node.value
         if isinstance(att, ast.Name):
+            self.debug(f"visit_Attribute contexto de decorator: {self.razion}")
             self.tratar_Name(att, node)
         self.generic_visit(node)
         
@@ -117,6 +118,9 @@ class CallVisitor(ast.NodeVisitor):
         if isinstance(compare.left, ast.Attribute):
             self.parse_attr(compare.left)
         
+        if isinstance(compare.left, ast.Call):
+            self.parse_call(compare.left)
+            
         for comparator in compare.comparators:  
             self.debug(f'compare.comparators type: {comparator}')
             if isinstance(comparator, ast.Constant):
@@ -129,7 +133,8 @@ class CallVisitor(ast.NodeVisitor):
                 # pass    
     # Call(expr func, expr* args, keyword* keywords)
     def parse_call(self, node):
-        # self.debug(f'[c] {node.func} {node.func.id}')    
+        if isinstance(node, ast.Call):
+            self.debug(f'[c] {node.func} {node}')    
         # self.debug(f'[c] - {node.func.value.value.id} , {node.keywords}, {node.lineno}')
         if isinstance(node.func, ast.Attribute):
             self.parse_attr(node.func)
@@ -233,7 +238,7 @@ class CallVisitor(ast.NodeVisitor):
                     if (parent.attr in self.libs_os[mod[0]] or len(self.libs_os[mod[0]])==0) and (self.p):
                         if isinstance(self.p, ast.Compare):
                             for comparator in self.p.comparators:    
-                                self.debug(f'comparators compare: {comparator} -- tratar_Name')
+                                self.debug(f"comparators compare: {comparator} -- tratar_Name")
                                 if isinstance(comparator, ast.Call):
                                     self.tratar_call_plaftorm(comparator)
                                 if isinstance(comparator, ast.Constant):
