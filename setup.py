@@ -11,7 +11,7 @@ with open(
 
 setup(
     name=NAME,
-    version="1.0.2",
+    version="1.0.5",
     license="MIT",
     author="Ricardo Job",
     url="https://github.com/ricardojob/OSTDetector",
@@ -62,4 +62,5 @@ setup(
 # create a token in respository (PyPi or test.PyPi)
 # python3 -m twine upload --repository testpypi dist/*
 
-# python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps psae-ricardojob
+# python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps osdetector-ricardojob
+# pip install -i https://test.pypi.org/simple/ ostdetector==1.0.5

@@ -1,171 +1,86 @@
-# samples
+[![Tests](https://github.com/ricardojob/psae/actions/workflows/tests.yaml/badge.svg)](https://github.com/ricardojob/ostdetector/actions/workflows/tests.yaml)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/psae)](https://pypi.org/project/ostdetector/)
 
-## Conditional Platform
-```python
-# method returns the result of the expression after evaluation, and store the result in tree
-tree = ast.parse(source.read()) 
-#method returns a formatted string of the tree structure in tree.
-pprint(ast.dump(tree)) 
-```
+# OSTDetector
 
-We have three cases: attribute, call and compare.
+An automated tool for extracting OS-specific Tests from Git repositories written in Python. 
+The `ostdetector` (**O**perating System-**S**pecific **T**ests **D**etector) is primarily designed to be used as a command-line tool. 
+With `ostdetector`, you can easily extract information about the OS-specific Tests from the Git repository (only python files are analyzed).
+The set of OS-specific Tests are saved in a given CSV file.
 
+## Install
 
-### If with Attibute (verify if value exists)
-
-
-Grammar 
+The easiest way to install `ostdetector` is to install from Pypi
 
 ```
-Attribute(expr value, identifier attr, expr_context ctx)
+pip install -i https://test.pypi.org/simple/ ostdetector==1.0.5
 ```
 
-original code:
-
-```python
-if config.parsed_args.platform:
-    return config.parsed_args.platform
+Alternatively, you can install from `test environment`
+```
+pip install --index-url https://test.pypi.org/simple/ --no-deps ostdetector
 ```
 
-tree generated :
+You may wish to use this tool in a virtual environment. You can use the following commands.
 
 ```
-If(
-test=Attribute(
-    value=Attribute(value=Name(id='config', ctx=Load()), 
- attr='parsed_args', ctx=Load()), attr='platform', ctx=Load()),
- 
- body=[Return(value=Attribute(value=Attribute(value=Name(id='config', 
- ctx=Load()), attr='parsed_args', ctx=Load()), attr='platform', 
- ctx=Load()))],
- 
- orelse=[]
- )
- ```
-
-
- ### If with Call (call a function for verification)
-
-Grammar 
-
-```
-Call(expr func, expr* args, keyword* keywords)
+virtualenv ostdetector_venv
+source ostdetector_venv/bin/activate
+pip install ostdetector
 ```
 
-original code:
+## Quick examples
 
-```python
-if sys_platform.startswith("linux"):
-    raise RuntimeError("Unknown machine!")
-```
-
-tree generated :
-
-```
- If(
-    test=Call(
-        func=Attribute(value=Name(id='sys_platform', ctx=Load()), attr='startswith', ctx=Load()), 
-        args=[Constant(value='linux', kind=None)], 
-        keywords=[]), 
-    body=[Raise(
-        exc=Call(
-            func=Name(id='RuntimeError', ctx=Load()), 
-            args=[Constant(value='Unknown machine', kind=None)], 
-            keywords=[]), 'cause=None)], 
-    orelse=[])
- ```
-
- ### If with Compare ()
-
-Grammar 
-
-```
-Compare(expr left, cmpop* ops, expr* comparators)
-```
-
-
-original code:
-
-```python
-if machine == "aarch64":
-    return "linux-aarch64"
-elif machine == "x86_64":
-    return "linux-64"
-else:
-    raise RuntimeError("Unknown machine!")
-```
-
-tree generated :
-
-```
-If(test=Compare(
-        left=Name(id='machine', ctx=Load()), ops=[Eq()], comparators=[Constant(value='aarch64', kind=None)]
-), 
-    body=[Return(value=Constant(value='linux-aarch64', kind=None))], 
-orelse=[
-    If(test=Compare(
-        left=Name(id='machine', ctx=Load()), ops=[Eq()], comparators=[Constant(value='x86_64', kind=None)]
-    ), 
-    body=[Return(value=Constant(value='linux-64', kind=None))], 
-orelse=[
-    Raise(exc=Call(
-        func=Name(id='RuntimeError', ctx=Load()), args=[Constant(value='Unknown machine!', kind=None)], keywords=[]), cause=None)])
- )
- ```
-
-## Conditional Platform with Decorator
-
-With decorator  we have three cases: FunctionDef, AsyncFunctionDef and ClassDef.
-
-Grammar 
-
-```
-FunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns, string? type_comment)
-
-AsyncFunctionDef(identifier name, arguments args,stmt* body, expr* decorator_list, expr? returns,string? type_comment)
-
-ClassDef(identifier name,expr* bases,keyword* keywords,stmt* body,expr* decorator_list)
-```
-
-original code:
-
-```python
-@unittest.skipIf(sys.platform == 'macos',"Mac supports file descriptors.",)
-class ShellCommandTestCase(SimpleTestCase):
-    @unittest.skipIf(sys.platform == 'win32',"Linux is better",)
-    def test_function(self, select):
-        with captured_stdin() as stdin, captured_stdout() as stdout:
-            stdin.write(self.script_globals)
-            stdin.seek(0)
-            call_command('shell')
-        self.assertEqual(stdout.getvalue().strip(), 'True')
-
-    @unittest.skipIf(sys.platform == 'linux',"Windows select() doesn't support file descriptors.",)
-    async def test_function_async(self, select):
-        with captured_stdin() as stdin, captured_stdout() as stdout:
-            stdin.write(self.script_with_inline_function)
-        self.assertEqual(stdout.getvalue().strip(), __version__)
-```
-
-output
+As an example, the following command extracts every OS-Specific Testes from the repository `ricardojob/ostdetector`. 
+It also saves various information (line, module, filename ...) in directory `dir_output`. 
+This information will be available in the output file.
 
 ```bash
-visit_ClassDef
-[Function]  ShellCommandTestCase
-value attribute:  sys
-name attribute:  platform
-comparators compare:  macos
-[reason] call args:  Mac supports file descriptors.
-visit_FunctionDef
-[Function]  test_function
-value attribute:  sys
-name attribute:  platform
-comparators compare:  win32
-[reason] call args:  Linux is better
-visit_AsyncFunctionDef
-[Function]  test_function_async
-value attribute:  sys
-name attribute:  platform
-comparators compare:  linux
-[reason] call args:  Windows select() doesn't support file descriptors.
+ostdetector ricardojob/ostdetector -o dir_output
 ```
+
+Note that the tool also can fetch it. 
+For example, the GitHub repository `https://github.com/ricardojob/ostdetector` will be fetched, saved under the `dir_output/ricardojob` directory.
+Note that, by default all projects are cloned to the `data` directory.
+
+
+## Usage
+
+After installation, the `ostdetector` command-line tool should be available in your shell. 
+Otherwise, please replace `ostdetector` by `python -m ostdetector`. 
+The explanations in the following stays valid in both cases.
+
+You can use `ostdetector` with the following arguments:
+
+```
+Usage: ostdetector [OPTIONS] REPOSITORY
+
+  Extract the usage of OS-Specific Tests from a single Git repository
+  `REPOSITORY`. The Git repository can be remote. It will be pulled locally in
+  the folder `data`. Every extracted OS-Specific Tests will be written in the
+  dir given to `-o`, or in the `data' if not specified.
+
+  Example of usage: python main.py ricardojob/OSTDetector -o data_experiment
+
+Options:
+  -o, --output DIRECTORY  The output dir where the usage of OS-Specific Tests
+                          related to the repository will be stored. By
+                          default, the information will written to `data' dir.
+  -h, --help              Show this message and exit.
+```
+
+The `*compare.csv' file given to directory `-o` will contain the following columns:
+- `project_name`: the name of the repository
+- `project_hash`: the commit SHA of the commit where the OS-specific tests file was extracted
+- `line`: the line where the OS-specific tests usage occurs
+- `module`: the module that packages the OS-specific tests (e.g., sys)
+- `package`: the API (e.g., platform)
+- `platform`: the information about OS (e.g, win32)
+- `file`: the file name
+- `function`: the function name
+- `method_type`: the method type (method_test or support)
+- `url`: the URL that represents the API usage on Github
+
+## License
+
+Distributed under [MIT License](https://github.com/ricardojob/ostdetector/blob/main/LICENSE.txt).
