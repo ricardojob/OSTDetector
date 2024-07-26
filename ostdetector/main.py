@@ -1,7 +1,6 @@
 import logging
 import click
-from detector import Detector
-
+from ostdetector.report import Detector
 
 logging.basicConfig(level=logging.INFO)
 # logging.basicConfig(level=logging.INFO, filename='log.txt')
@@ -16,7 +15,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "-o",
     help="The output dir where the usage of OS-Specific Tests related to the repository will be stored. "
     "By default, the information will written to `data' dir.",
-    type=click.Path(exists=False, file_okay=True, dir_okay=False, writable=True),
+    type=click.Path(exists=False, file_okay=False, dir_okay=True, writable=True),
 )
 @click.argument(
     "repository",

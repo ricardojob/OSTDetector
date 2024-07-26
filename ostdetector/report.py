@@ -1,10 +1,10 @@
 import ast
 import os
 import shutil
-from get_repo import Repo
+from ostdetector.get_repo import Repo
 from ostdetector.writer_csv import WriterCSV
-from collect_visitor import CallVisitor
-from assign_visitor import AssignVisitor
+from ostdetector.collect_visitor import CallVisitor
+from ostdetector.assign_visitor import AssignVisitor
 
 class Detector:
     def __init__(self, repository, output_dir="data"):   
@@ -17,7 +17,7 @@ class Detector:
         self.libs_os['os'] = ['name', 'supports_bytes_environ', 'name']
         self.libs_os['platform'] = ['platform', 'system', 'version', 'uname','win32_edition','win32_ver','win32_is_iot','mac_ver','libc_ver', 'freedesktop_os_release']
         self.decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
-        self.heads_decorator = ['project_name','project_hash', 'line', 'module', 'package', 'platform', 'decorator', 'razion',  'filename','func_def', 'class_def', 'url']
+        self.heads_decorator = ['project_name','project_hash', 'line', 'module', 'package', 'platform', 'decorator', 'reason',  'filename','func_def', 'class_def', 'url']
         self.heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function', 'method_type','url']
         self.heads_project_metadata = ['project_name','project_hash', 'libos_use', 'tests_files', 'tests_files_libos_use', 'tests_files_libos_use_and_call',
                                 'count_calls_libos_in_code', 'count_calls_libos_in_decorator', 'count_class_decorator', 'count_method_decorator']
@@ -125,7 +125,7 @@ class Detector:
         writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path=f"{self.output_dir}")
         writer.write(head=self.heads_compare, rows=packages)
         
-        writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_razions', path=f"{self.output_dir}")
+        writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_reasons', path=f"{self.output_dir}")
         writer.write(head=self.heads_decorator, rows=razions) 
         
         writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_metadata', path=f"{self.output_dir}")
