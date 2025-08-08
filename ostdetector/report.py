@@ -19,7 +19,7 @@ class Detector:
         self.decorators = ['pytest.mark.skipif', 'mark.skipif', 'skipif', 'pytest.mark.xfail', 'mark.xfail' ,'xfail', 'unittest.skipUnless','skipUnless', 'unittest.skipIf', 'skipIf']
         self.heads_decorator = ['project_name','project_hash', 'line', 'module', 'package', 'platform', 'decorator', 'reason',  'filename','func_def', 'class_def', 'url']
         self.heads_compare = ['project_name','project_hash','line', 'module', 'package', 'platform', 'file', 'function', 'method_type','url']
-        self.heads_project_metadata = ['project_name','project_hash', 'libos_use', 'tests_files', 'tests_files_libos_use', 'tests_files_libos_use_and_call',
+        self.heads_project_metadata = ['project_name','project_hash', 'libos_use','count_files', 'count_tests_files_problems', 'tests_files', 'tests_files_libos_use', 'tests_files_libos_use_and_call',
                                 'count_calls_libos_in_code', 'count_calls_libos_in_decorator', 'count_class_decorator', 'count_method_decorator']
         self.heads_assigns = ['project_name','project_hash', 'line', 'module', 'package', 'filename', 'url']
     
@@ -59,12 +59,16 @@ class Detector:
         count_class_decorator = 0 
         count_method_decorator = 0
         
+        count_files = 0 # number of files 
+        count_tests_files_problems = 0
+        
         project_name, project_hash, project_dir = self.clone(self.repository)
         packages = []
         razions = []
         for python_file in self.all_files(project_dir):
             if python_file.is_dir(): continue #only files
             filename = str(python_file).replace(project_dir,"")
+            count_files +=1
             if not 'test' in filename: continue #only test files
             
             try: # fill data
@@ -90,15 +94,20 @@ class Detector:
                     packages.extend(monitor.package_os)
                         
                 if len(monitor.razions) > 0:
+                    print(f"-----------{filename}--------")
                     for row in monitor.razions:
                         row_temp = []    
+                        print(f" > {row} -- {row_temp}")    
                         for v in self.heads_decorator:
+                            # try:
                             row_temp.extend([row[v]])
                             if v == "func_def" and str(row[v]).strip() == "": 
                                 count_class_decorator = count_class_decorator + 1
-                                
+                            # except KeyError:
+                            #     continue        
+                        print(f" > {row} -- {row_temp}")    
                         razions.append(row_temp)
-                
+                    print(f"filename: {filename}, Reasons: {len(razions)}")
                 if len(verify.assigns) > 0:
                     assigns.extend(verify.assigns)
                     
@@ -110,18 +119,22 @@ class Detector:
                 if (len(monitor.package_os) > 0 or len(monitor.razions) > 0):
                     count_tests_files_libos_use_and_call = count_tests_files_libos_use_and_call +1
                     
-            except SyntaxError as ex:
+            except (SyntaxError, KeyError) as ex:
                 print(f'SyntaxError: {ex} in {python_file}') 
+                count_tests_files_problems +=1
         
         count_method_decorator = count_calls_libos_in_decorator - count_class_decorator # method = all - class
         
         projects_metadata.append([
             project_name, project_hash,project_libos_use,
+            count_files, count_tests_files_problems,
             count_tests_files, count_tests_files_libos_use, count_tests_files_libos_use_and_call, 
             count_calls_libos_in_code,count_calls_libos_in_decorator,
             count_class_decorator, count_method_decorator
         ])
         
+        print(f"Reasons: {len(razions)}")
+        sufix = f'{self.output_dir}/%s/{project_name.strip().replace("/","_")}.csv'
         writer = WriterCSV(name=f'experiment_{project_name.replace("/","_")}_compare', path=f"{self.output_dir}")
         writer.write(head=self.heads_compare, rows=packages)
         

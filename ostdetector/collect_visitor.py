@@ -71,7 +71,7 @@ class CallVisitor(ast.NodeVisitor):
     def visit_Attribute(self, node):
         att = node.value
         if isinstance(att, ast.Name):
-            self.debug(f"visit_Attribute contexto de decorator: {self.razion}")
+            self.debug(f"visit_Attribute contexto de decorator: {self.razion}, at {att.id}")
             self.tratar_Name(att, node)
         self.generic_visit(node)
         
@@ -148,7 +148,7 @@ class CallVisitor(ast.NodeVisitor):
                 if isinstance(a.value, ast.Constant):
                     self.debug(f'[k] line: {a.value.lineno}, val: {a.value.value}, arg: {a.arg}')
                     if 'reason' == a.arg:
-                        self.razion['razion'] = a.value.value
+                        self.razion['reason'] = a.value.value
                         self.razion['line'] = a.value.lineno
                         self.razion['url'] = self.gerar_url(a.value.lineno)
             for arg in d.args:
@@ -158,7 +158,7 @@ class CallVisitor(ast.NodeVisitor):
                 if isinstance(arg, ast.Compare):
                     self.parse_compare(arg)
                 if isinstance(arg, ast.Constant): # when not definier a reason at annotation
-                    self.razion['razion'] = arg.value
+                    self.razion['reason'] = arg.value
                 if isinstance(arg, ast.UnaryOp):
                     if isinstance(arg.operand, ast.Call):
                         self.parse_call(arg.operand)    
