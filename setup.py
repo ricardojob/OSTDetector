@@ -11,7 +11,7 @@ with open(
 
 setup(
     name=NAME,
-    version="1.0.6",
+    version="1.0.2",
     license="MIT",
     author="Ricardo Job",
     url="https://github.com/ricardojob/OSTDetector",
@@ -36,7 +36,7 @@ setup(
     ],
     keywords="os-specific test detect tool",
     packages=find_packages(include=[NAME]),
-    python_requires="~= 3.8",
+    python_requires="~= 2.7",
     install_requires=[
         "click ~= 8.1.7",
         "jsonschema ~= 4.21.0",
