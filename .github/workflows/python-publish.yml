@@ -29,15 +29,31 @@ jobs:
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
+          python -m pip install --upgrade build
           python -m pip install build
           python -m build
+          python -m pip install --upgrade twine
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
           name: release-dists
           path: dist/
+# python3 -m venv psaenv
+# source psaenv/bin/activate
+# pip3 install -r requirements.txt
 
+## build app
+# pip3 install -e .
+# python3 -m pip install --upgrade build
+# python3 -m build
+# python3 -m pip install --upgrade twine
+
+# create a token in respository (PyPi or test.PyPi)
+# python3 -m twine upload --repository testpypi dist/*
+
+# python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps osdetector-ricardojob
+# pip install -i https://test.pypi.org/simple/ ostdetector==1.0.6
   pypi-publish:
     runs-on: ubuntu-latest
     needs:
